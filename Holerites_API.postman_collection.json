@@ -1,0 +1,176 @@
+{
+  "info": {
+    "name": "Holerites API",
+    "description": "Collection for Holerites backend API endpoints - Users and Authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "holerites-api"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Sign In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"12345678901\",\n  \"senha\": \"MinhaSenh@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/signin",
+              "host": ["{{base_url}}"],
+              "path": ["api", "signin"]
+            },
+            "description": "Authenticate user with CPF and password. Returns JWT token or NEW_PASSWORD_REQUIRED challenge."
+          },
+          "response": []
+        },
+        {
+          "name": "New Password Challenge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"12345678901\",\n  \"novaSenha\": \"NovaSenha@123\",\n  \"session\": \"session_token_from_signin_response\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/new-password-challenge",
+              "host": ["{{base_url}}"],
+              "path": ["api", "new-password-challenge"]
+            },
+            "description": "Complete new password challenge when signin returns NEW_PASSWORD_REQUIRED. Use the session token from signin response."
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints for user login and password management"
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"98765432109\",\n  \"email\": \"usuario@exemplo.com\",\n  \"nome\": \"João Silva\",\n  \"grupo\": \"EMPLOYEES\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api",
+              "host": ["{{base_url}}"],
+              "path": ["api"]
+            },
+            "description": "Create a new user. Requires ADMINISTRATORS or MANAGERS role. Available groups: ADMINISTRATORS, MANAGERS, EMPLOYEES."
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle User Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"98765432109\",\n  \"enabled\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "status"]
+            },
+            "description": "Enable or disable a user account. Requires ADMINISTRATORS or MANAGERS role. Set enabled to true to activate or false to deactivate."
+          },
+          "response": []
+        }
+      ],
+      "description": "User management endpoints for creating and managing users"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -11,6 +11,7 @@ import {
   NotAuthorizedException,
   UserNotFoundException,
 } from '@aws-sdk/client-cognito-identity-provider';
+import { createHmac } from 'node:crypto';
 
 @Injectable()
 export class AuthService {
@@ -36,18 +37,37 @@ export class AuthService {
     });
   }
 
+  private calculateSecretHash(username: string): string {
+    const clientId = this.configService.get<string>('COGNITO_CLIENT_ID');
+    const clientSecret = this.configService.get<string>(
+      'COGNITO_CLIENT_SECRET',
+    );
+
+    if (!clientSecret) {
+      throw new Error('Missing Cognito client secret');
+    }
+
+    const hmac = createHmac('sha256', clientSecret);
+    hmac.update(username + clientId);
+    return hmac.digest('base64');
+  }
+
   async signIn(cpf: string, senha: string) {
+    const secretHash = this.calculateSecretHash(cpf);
+
     const command = new InitiateAuthCommand({
-      AuthFlow: 'USER_SRP_AUTH',
+      AuthFlow: 'USER_PASSWORD_AUTH',
       ClientId: this.configService.get<string>('COGNITO_CLIENT_ID'),
       AuthParameters: {
         USERNAME: cpf,
         PASSWORD: senha,
+        SECRET_HASH: secretHash,
       },
     });
 
     try {
       const response = await this.cognitoClient.send(command);
+      console.log('Cognito response:', response);
 
       if (response.AuthenticationResult) {
         return {
@@ -81,12 +101,15 @@ export class AuthService {
     novaSenha: string,
     session: string,
   ) {
+    const secretHash = this.calculateSecretHash(cpf);
+
     const command = new RespondToAuthChallengeCommand({
       ChallengeName: 'NEW_PASSWORD_REQUIRED',
       ClientId: this.configService.get<string>('COGNITO_CLIENT_ID'),
       ChallengeResponses: {
         USERNAME: cpf,
         NEW_PASSWORD: novaSenha,
+        SECRET_HASH: secretHash,
       },
       Session: session,
     });
