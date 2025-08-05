@@ -1,5 +1,3 @@
-// src/auth/auth.service.ts
-
 import {
   Injectable,
   UnauthorizedException,
@@ -10,7 +8,6 @@ import {
   CognitoIdentityProviderClient,
   InitiateAuthCommand,
   RespondToAuthChallengeCommand,
-  AdminCreateUserCommand,
   NotAuthorizedException,
   UserNotFoundException,
 } from '@aws-sdk/client-cognito-identity-provider';
@@ -105,35 +102,6 @@ export class AuthService {
       throw new BadRequestException(
         'Não foi possível definir a nova senha. ' + error.message,
       );
-    }
-  }
-
-  async adminCreateUser(cpf: string, email: string | null, nome: string) {
-    const command = new AdminCreateUserCommand({
-      UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-      Username: cpf,
-      TemporaryPassword: Math.random().toString(36).slice(-8) + 'A1!',
-      UserAttributes: [
-        {
-          Name: 'name',
-          Value: nome,
-        },
-        ...(email
-          ? [
-              { Name: 'email', Value: email },
-              { Name: 'email_verified', Value: 'true' },
-            ]
-          : []),
-      ],
-      MessageAction: 'SUPPRESS', // Não envia o e-mail de boas-vindas padrão do Cognito
-    });
-
-    try {
-      const response = await this.cognitoClient.send(command);
-      console.log('Senha temporária gerada:', command.input.TemporaryPassword);
-      return response.User;
-    } catch (error) {
-      throw new BadRequestException('Erro ao criar usuário: ' + error.message);
     }
   }
 }

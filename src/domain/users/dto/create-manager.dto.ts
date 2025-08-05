@@ -3,12 +3,10 @@ import {
   IsNotEmpty,
   IsEmail,
   IsOptional,
-  IsEnum,
   Matches,
 } from 'class-validator';
-import { UserGroups } from '../../../core';
 
-export class CreateUserDto {
+export class CreateManagerDto {
   @IsString()
   @IsNotEmpty()
   @Matches(/^\d{11}$/, { message: 'CPF deve conter exatamente 11 dígitos' })
@@ -21,9 +19,4 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   nome: string;
-
-  @IsEnum(UserGroups, {
-    message: `Grupo deve ser um dos seguintes: ${Object.values(UserGroups).join(', ')}`,
-  })
-  grupo: UserGroups;
 }

@@ -6,7 +6,7 @@ import {
   Matches,
 } from 'class-validator';
 
-export class CreateUserDto {
+export class CreateEmployeeDto {
   @IsString()
   @IsNotEmpty()
   @Matches(/^\d{11}$/, { message: 'CPF deve conter exatamente 11 dígitos' })
