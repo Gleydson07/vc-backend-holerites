@@ -1,8 +1,8 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { Public } from './decorators/public.decorator';
 import { SignInDto } from './dto/create-auth.dto';
 import { NewPasswordChallengeDto } from './dto/new-password-challenge.dto';
-import { Public } from './decorators/public.decorator';
 
 @Controller()
 export class AuthController {
@@ -11,7 +11,7 @@ export class AuthController {
   @Public()
   @Post('signin')
   async signIn(@Body() signInDto: SignInDto) {
-    return this.authService.signIn(signInDto.cpf, signInDto.senha);
+    return this.authService.signIn(signInDto.login, signInDto.senha);
   }
 
   @Public()
@@ -20,7 +20,7 @@ export class AuthController {
     @Body() newPasswordChallengeDto: NewPasswordChallengeDto,
   ) {
     return this.authService.respondToNewPasswordChallenge(
-      newPasswordChallengeDto.cpf,
+      newPasswordChallengeDto.login,
       newPasswordChallengeDto.novaSenha,
       newPasswordChallengeDto.session,
     );

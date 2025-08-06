@@ -1,20 +1,20 @@
 import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import {
-  CognitoIdentityProviderClient,
-  AdminCreateUserCommand,
   AdminAddUserToGroupCommand,
-  AdminUpdateUserAttributesCommand,
-  AdminRemoveUserFromGroupCommand,
+  AdminCreateUserCommand,
   AdminDeleteUserCommand,
   AdminDisableUserCommand,
   AdminEnableUserCommand,
   AdminListGroupsForUserCommand,
+  AdminRemoveUserFromGroupCommand,
+  AdminUpdateUserAttributesCommand,
+  CognitoIdentityProviderClient,
 } from '@aws-sdk/client-cognito-identity-provider';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
@@ -41,13 +41,25 @@ export class UsersService {
     });
   }
 
-  async create({ cpf, email, nome, grupo }: CreateUserDto) {
+  async create({ login, email, nome, grupos }: CreateUserDto) {
+    const givenName =
+      `${nome.split(' ')[0]} ${nome.split(' ')[1] || ''}`.trim();
+    const provisionalPassword = (
+      givenName.at(0)?.toUpperCase() +
+      givenName.slice(1, 4).trim().toLowerCase() +
+      login.slice(0, 4) +
+      'Px#'
+    )
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
     const createUserCommand = new AdminCreateUserCommand({
       UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-      Username: cpf,
-      TemporaryPassword: Math.random().toString(36).slice(-6) + 'A1!',
+      Username: login,
+      TemporaryPassword: provisionalPassword,
       UserAttributes: [
         { Name: 'name', Value: nome },
+        { Name: 'given_name', Value: givenName },
         ...(email
           ? [
               { Name: 'email', Value: email },
@@ -59,24 +71,45 @@ export class UsersService {
     });
 
     const tempPassword = createUserCommand.input.TemporaryPassword;
-    console.log('Senha temporária:', tempPassword);
 
     try {
       const createUserResponse =
         await this.cognitoClient.send(createUserCommand);
 
-      const addUserToGroupCommand = new AdminAddUserToGroupCommand({
-        UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-        Username: cpf,
-        GroupName: grupo,
+      const addToGroupPromises = grupos.map((grupo) => {
+        const addUserToGroupCommand = new AdminAddUserToGroupCommand({
+          UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
+          Username: login,
+          GroupName: grupo,
+        });
+        return this.cognitoClient.send(addUserToGroupCommand);
       });
 
-      await this.cognitoClient.send(addUserToGroupCommand);
+      await Promise.all(addToGroupPromises);
 
-      return createUserResponse.User;
+      const userAttributes = createUserResponse.User?.Attributes?.map(
+        (attr) => {
+          if (attr.Name && ['sub', 'name', 'email'].includes(attr.Name)) {
+            return {
+              [attr.Name]: attr.Value,
+            };
+          }
+        },
+      );
+
+      return {
+        login: createUserResponse.User?.Username,
+        senhaTemporaria: tempPassword,
+        nome: userAttributes?.[0]?.name,
+        email: userAttributes?.[0]?.email,
+        grupos: grupos,
+        message: `Será solicitado que o usuário ${givenName} altere a senha temporária na primeira vez que fizer login.`,
+      };
     } catch (error) {
       if (error.name === 'UserNotFoundException') {
-        throw new NotFoundException(`Usuário com CPF ${cpf} não encontrado.`);
+        throw new NotFoundException(
+          `Usuário com login ${login} não encontrado.`,
+        );
       }
 
       if (
@@ -85,7 +118,7 @@ export class UsersService {
       ) {
         const deleteUserCommand = new AdminDeleteUserCommand({
           UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-          Username: cpf,
+          Username: login,
         });
 
         try {
@@ -99,24 +132,24 @@ export class UsersService {
       }
 
       throw new BadRequestException(
-        'Erro ao criar usuário ou atribuir grupo: ' + error.message,
+        'Erro ao criar usuário ou atribuir grupos: ' + error.message,
       );
     }
   }
 
   async updateUserAttributes(
-    cpf: string,
+    login: string,
     attributes: { Name: string; Value: string }[],
   ) {
     const command = new AdminUpdateUserAttributesCommand({
       UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-      Username: cpf,
+      Username: login,
       UserAttributes: attributes,
     });
 
     try {
       await this.cognitoClient.send(command);
-      return { message: `Dados do usuário ${cpf} atualizados com sucesso.` };
+      return { message: `Dados do usuário ${login} atualizados com sucesso.` };
     } catch (error) {
       throw new BadRequestException(
         `Erro ao atualizar dados: ${error.message}`,
@@ -124,20 +157,22 @@ export class UsersService {
     }
   }
 
-  async disableUser(cpf: string) {
+  async disableUser(login: string) {
     const command = new AdminDisableUserCommand({
       UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-      Username: cpf,
+      Username: login,
     });
 
     try {
       await this.cognitoClient.send(command);
       return {
-        message: `A conta do usuário com CPF ${cpf} foi desabilitada com sucesso.`,
+        message: `A conta do usuário com login ${login} foi desabilitada com sucesso.`,
       };
     } catch (error) {
       if (error.name === 'UserNotFoundException') {
-        throw new NotFoundException(`Usuário com CPF ${cpf} não encontrado.`);
+        throw new NotFoundException(
+          `Usuário com login ${login} não encontrado.`,
+        );
       }
       throw new BadRequestException(
         `Erro ao desabilitar usuário: ${error.message}`,
@@ -145,20 +180,22 @@ export class UsersService {
     }
   }
 
-  async enableUser(cpf: string) {
+  async enableUser(login: string) {
     const command = new AdminEnableUserCommand({
       UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-      Username: cpf,
+      Username: login,
     });
 
     try {
       await this.cognitoClient.send(command);
       return {
-        message: `A conta do usuário com CPF ${cpf} foi reativada com sucesso.`,
+        message: `A conta do usuário com login ${login} foi reativada com sucesso.`,
       };
     } catch (error) {
       if (error.name === 'UserNotFoundException') {
-        throw new NotFoundException(`Usuário com CPF ${cpf} não encontrado.`);
+        throw new NotFoundException(
+          `Usuário com login ${login} não encontrado.`,
+        );
       }
       throw new BadRequestException(
         `Erro ao reativar usuário: ${error.message}`,
@@ -166,24 +203,24 @@ export class UsersService {
     }
   }
 
-  async toggleUserStatus(cpf: string, enabled: boolean) {
+  async toggleUserStatus(login: string, enabled: boolean) {
     if (enabled) {
-      return this.enableUser(cpf);
+      return this.enableUser(login);
     } else {
-      return this.disableUser(cpf);
+      return this.disableUser(login);
     }
   }
 
-  async changeUserGroup(cpf: string, newGroup: string, oldGroup: string) {
+  async changeUserGroup(login: string, newGroup: string, oldGroup: string) {
     const addToGroupCommand = new AdminAddUserToGroupCommand({
       UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-      Username: cpf,
+      Username: login,
       GroupName: newGroup,
     });
 
     const removeFromGroupCommand = new AdminRemoveUserFromGroupCommand({
       UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-      Username: cpf,
+      Username: login,
       GroupName: oldGroup,
     });
 
@@ -192,52 +229,133 @@ export class UsersService {
       await this.cognitoClient.send(removeFromGroupCommand);
 
       return {
-        message: `Usuário ${cpf} movido do grupo ${oldGroup} para ${newGroup}.`,
+        message: `Usuário ${login} movido do grupo ${oldGroup} para ${newGroup}.`,
       };
     } catch (error) {
       throw new BadRequestException(`Erro ao alterar grupo: ${error.message}`);
     }
   }
 
-  async removeUserFromGroup(cpf: string, groupName: string) {
+  async addUserToGroups(login: string, grupos: string[]) {
+    const addToGroupPromises = grupos.map((grupo) => {
+      const addUserToGroupCommand = new AdminAddUserToGroupCommand({
+        UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
+        Username: login,
+        GroupName: grupo,
+      });
+      return this.cognitoClient.send(addUserToGroupCommand);
+    });
+
+    try {
+      await Promise.all(addToGroupPromises);
+      return {
+        message: `Usuário ${login} adicionado aos grupos: ${grupos.join(', ')}.`,
+      };
+    } catch (error) {
+      throw new BadRequestException(
+        `Erro ao adicionar grupos: ${error.message}`,
+      );
+    }
+  }
+
+  async removeUserFromGroups(login: string, grupos: string[]) {
+    const removeFromGroupPromises = grupos.map((grupo) => {
+      const removeUserFromGroupCommand = new AdminRemoveUserFromGroupCommand({
+        UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
+        Username: login,
+        GroupName: grupo,
+      });
+      return this.cognitoClient.send(removeUserFromGroupCommand);
+    });
+
+    try {
+      await Promise.all(removeFromGroupPromises);
+      return {
+        message: `Usuário ${login} removido dos grupos: ${grupos.join(', ')}.`,
+      };
+    } catch (error) {
+      throw new BadRequestException(`Erro ao remover grupos: ${error.message}`);
+    }
+  }
+
+  async setUserGroups(login: string, novosGrupos: string[]) {
+    try {
+      // Primeiro, obter os grupos atuais do usuário
+      const gruposAtuais = await this.getUserGroups(login);
+
+      // Remover de todos os grupos atuais
+      if (gruposAtuais.length > 0) {
+        await this.removeUserFromGroups(login, gruposAtuais);
+      }
+
+      // Adicionar aos novos grupos
+      await this.addUserToGroups(login, novosGrupos);
+
+      return {
+        message: `Grupos do usuário ${login} atualizados para: ${novosGrupos.join(', ')}.`,
+        gruposAnteriores: gruposAtuais,
+        gruposAtuais: novosGrupos,
+      };
+    } catch (error) {
+      throw new BadRequestException(
+        `Erro ao atualizar grupos: ${error.message}`,
+      );
+    }
+  }
+
+  async removeUserFromGroup(login: string, groupName: string) {
     const command = new AdminRemoveUserFromGroupCommand({
       UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-      Username: cpf,
+      Username: login,
       GroupName: groupName,
     });
 
     try {
       await this.cognitoClient.send(command);
       return {
-        message: `A role '${groupName}' foi removida do usuário ${cpf}.`,
+        message: `A role '${groupName}' foi removida do usuário ${login}.`,
       };
     } catch (error) {
       throw new BadRequestException(`Erro ao remover role: ${error.message}`);
     }
   }
 
-  async getUserGroup(cpf: string): Promise<string> {
+  async getUserGroups(login: string): Promise<string[]> {
     const command = new AdminListGroupsForUserCommand({
       UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-      Username: cpf,
+      Username: login,
     });
 
     try {
       const response = await this.cognitoClient.send(command);
 
-      // Retorna o primeiro grupo encontrado (assumindo que o usuário tem apenas um grupo)
+      // Retorna todos os grupos do usuário
       if (response.Groups && response.Groups.length > 0) {
-        return response.Groups[0].GroupName || '';
+        return response.Groups.map((group) => group.GroupName || '').filter(
+          (name) => name !== '',
+        );
       }
 
-      throw new NotFoundException('Usuário não pertence a nenhum grupo');
+      return [];
     } catch (error) {
       if (error.name === 'UserNotFoundException') {
-        throw new NotFoundException(`Usuário com CPF ${cpf} não encontrado.`);
+        throw new NotFoundException(
+          `Usuário com login ${login} não encontrado.`,
+        );
       }
       throw new BadRequestException(
         `Erro ao buscar grupos do usuário: ${error.message}`,
       );
     }
+  }
+
+  async getUserGroup(login: string): Promise<string[]> {
+    const grupos = await this.getUserGroups(login);
+
+    if (grupos.length === 0) {
+      throw new NotFoundException('Usuário não pertence a nenhum grupo');
+    }
+
+    return grupos;
   }
 }

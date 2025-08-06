@@ -1,12 +1,12 @@
-import { Controller, Post, Patch, Body, UseGuards } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UserStatusDto } from './dto/user-action.dto';
+import { Body, Controller, Post, Put, UseGuards } from '@nestjs/common';
+import { UserGroups } from '../../core';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UserStatusDto } from './dto/user-action.dto';
 import { UserManagementGuard } from './guards/user-management.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { UserGroups } from '../../core';
+import { UsersService } from './users.service';
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -20,12 +20,12 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Patch('/status')
+  @Put('/status')
   @Roles(UserGroups.ADMINISTRATORS, UserGroups.MANAGERS)
   @UseGuards(UserManagementGuard)
   toggleUserStatus(@Body() userStatusDto: UserStatusDto) {
     return this.usersService.toggleUserStatus(
-      userStatusDto.cpf,
+      userStatusDto.login,
       userStatusDto.enabled,
     );
   }

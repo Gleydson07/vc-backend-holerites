@@ -1,17 +1,21 @@
 import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import {
+  AdminListGroupsForUserCommand,
   CognitoIdentityProviderClient,
+  GetUserCommand,
   InitiateAuthCommand,
-  RespondToAuthChallengeCommand,
   NotAuthorizedException,
+  RespondToAuthChallengeCommand,
   UserNotFoundException,
 } from '@aws-sdk/client-cognito-identity-provider';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createHmac } from 'node:crypto';
+import { SessionResponseDto } from './dto/session-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -37,29 +41,14 @@ export class AuthService {
     });
   }
 
-  private calculateSecretHash(username: string): string {
-    const clientId = this.configService.get<string>('COGNITO_CLIENT_ID');
-    const clientSecret = this.configService.get<string>(
-      'COGNITO_CLIENT_SECRET',
-    );
-
-    if (!clientSecret) {
-      throw new Error('Missing Cognito client secret');
-    }
-
-    const hmac = createHmac('sha256', clientSecret);
-    hmac.update(username + clientId);
-    return hmac.digest('base64');
-  }
-
-  async signIn(cpf: string, senha: string) {
-    const secretHash = this.calculateSecretHash(cpf);
+  async signIn(login: string, senha: string) {
+    const secretHash = this.calculateSecretHash(login);
 
     const command = new InitiateAuthCommand({
       AuthFlow: 'USER_PASSWORD_AUTH',
       ClientId: this.configService.get<string>('COGNITO_CLIENT_ID'),
       AuthParameters: {
-        USERNAME: cpf,
+        USERNAME: login,
         PASSWORD: senha,
         SECRET_HASH: secretHash,
       },
@@ -67,12 +56,25 @@ export class AuthService {
 
     try {
       const response = await this.cognitoClient.send(command);
-      console.log('Cognito response:', response);
 
       if (response.AuthenticationResult) {
+        let user: SessionResponseDto | null = null;
+
+        if (response.AuthenticationResult.AccessToken) {
+          user = await this.getSession(
+            response.AuthenticationResult.AccessToken,
+          );
+        }
+
         return {
           success: true,
-          tokens: response.AuthenticationResult,
+          accessToken: response.AuthenticationResult.AccessToken,
+          refreshToken: response.AuthenticationResult.RefreshToken,
+          user: {
+            id: user?.id || '',
+            nomeCompleto: user?.nomeCompleto || '',
+            primeiroNome: user?.primeiroNome || '',
+          },
         };
       }
 
@@ -90,24 +92,24 @@ export class AuthService {
         error instanceof NotAuthorizedException ||
         error instanceof UserNotFoundException
       ) {
-        throw new UnauthorizedException('CPF ou senha inválidos.');
+        throw new UnauthorizedException('Login(CPF) ou senha inválidos.');
       }
       throw error;
     }
   }
 
   async respondToNewPasswordChallenge(
-    cpf: string,
+    login: string,
     novaSenha: string,
     session: string,
   ) {
-    const secretHash = this.calculateSecretHash(cpf);
+    const secretHash = this.calculateSecretHash(login);
 
     const command = new RespondToAuthChallengeCommand({
       ChallengeName: 'NEW_PASSWORD_REQUIRED',
       ClientId: this.configService.get<string>('COGNITO_CLIENT_ID'),
       ChallengeResponses: {
-        USERNAME: cpf,
+        USERNAME: login,
         NEW_PASSWORD: novaSenha,
         SECRET_HASH: secretHash,
       },
@@ -126,5 +128,86 @@ export class AuthService {
         'Não foi possível definir a nova senha. ' + error.message,
       );
     }
+  }
+
+  async getSession(accessToken: string): Promise<SessionResponseDto> {
+    try {
+      const getUserCommand = new GetUserCommand({
+        AccessToken: accessToken,
+      });
+
+      const response = await this.cognitoClient.send(getUserCommand);
+
+      const nomeCompleto =
+        response.UserAttributes?.find((attr) => attr.Name === 'name')?.Value ||
+        '';
+
+      const primeiroNome = nomeCompleto.split(' ')[0] || '';
+
+      const login = response.Username;
+      if (!login) {
+        throw new BadRequestException(
+          'Não foi possível obter o login(CPF) do usuário',
+        );
+      }
+
+      const grupos = await this.getUserGroups(login);
+
+      const sub =
+        response.UserAttributes?.find((attr) => attr.Name === 'sub')?.Value ||
+        '';
+
+      return {
+        id: sub,
+        nomeCompleto,
+        primeiroNome,
+        grupos,
+      };
+    } catch (error) {
+      if (
+        error.name === 'NotAuthorizedException' ||
+        error.name === 'UserNotFoundException'
+      ) {
+        throw new UnauthorizedException('Token inválido ou expirado');
+      }
+      throw error;
+    }
+  }
+
+  private async getUserGroups(login: string): Promise<string[]> {
+    try {
+      const listGroupsCommand = new AdminListGroupsForUserCommand({
+        UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
+        Username: login,
+      });
+
+      const response = await this.cognitoClient.send(listGroupsCommand);
+
+      return (
+        response.Groups?.map((group) => group.GroupName).filter(
+          (name): name is string => !!name,
+        ) || []
+      );
+    } catch (error) {
+      if (error.name === 'UserNotFoundException') {
+        throw new NotFoundException('Usuário não encontrado');
+      }
+      throw error;
+    }
+  }
+
+  private calculateSecretHash(username: string): string {
+    const clientId = this.configService.get<string>('COGNITO_CLIENT_ID');
+    const clientSecret = this.configService.get<string>(
+      'COGNITO_CLIENT_SECRET',
+    );
+
+    if (!clientSecret) {
+      throw new Error('Missing Cognito client secret');
+    }
+
+    const hmac = createHmac('sha256', clientSecret);
+    hmac.update(username + clientId);
+    return hmac.digest('base64');
   }
 }

@@ -1,7 +1,7 @@
 export enum UserGroups {
-  ADMINISTRATORS = 'ADMINISTRATORS',
-  MANAGERS = 'MANAGERS',
-  EMPLOYEES = 'EMPLOYEES',
+  ADMINISTRATORS = 'administradores',
+  MANAGERS = 'gestores',
+  EMPLOYEES = 'colaboradores',
 }
 
 export const USER_GROUPS = {

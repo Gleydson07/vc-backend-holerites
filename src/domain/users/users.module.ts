@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { UsersService } from './users.service';
-import { UsersController } from './users.controller';
 import { UserManagementGuard } from './guards/user-management.guard';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
 
 @Module({
   imports: [ConfigModule],

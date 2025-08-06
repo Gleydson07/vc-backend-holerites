@@ -1,9 +1,11 @@
 import {
-  IsString,
-  IsNotEmpty,
+  ArrayNotEmpty,
+  IsArray,
   IsEmail,
-  IsOptional,
   IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
   Matches,
 } from 'class-validator';
 import { UserGroups } from '../../../core';
@@ -11,8 +13,10 @@ import { UserGroups } from '../../../core';
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d{11}$/, { message: 'CPF deve conter exatamente 11 dígitos' })
-  cpf: string;
+  @Matches(/^\d{11}$/, {
+    message: 'Login(CPF) deve conter exatamente 11 dígitos',
+  })
+  login: string;
 
   @IsOptional()
   @IsEmail({}, { message: 'Email deve ter um formato válido' })
@@ -22,8 +26,11 @@ export class CreateUserDto {
   @IsNotEmpty()
   nome: string;
 
+  @IsArray()
+  @ArrayNotEmpty({ message: 'Pelo menos um grupo deve ser fornecido' })
   @IsEnum(UserGroups, {
-    message: `Grupo deve ser um dos seguintes: ${Object.values(UserGroups).join(', ')}`,
+    each: true,
+    message: `Cada grupo deve ser um dos seguintes: ${Object.values(UserGroups).join(', ')}`,
   })
-  grupo: UserGroups;
+  grupos: UserGroups[];
 }

@@ -1,8 +1,8 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UserGroups } from '../../../core';
@@ -17,20 +17,28 @@ export class UserManagementGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const userRole = request.user?.grupo;
+    const userRole = request.user?.grupos;
+
+    // Transforma grupos para lowercase se existirem no body
+    if (request.body && Array.isArray(request.body.grupos)) {
+      request.body.grupos = request.body.grupos.map((grupo: string) =>
+        typeof grupo === 'string' ? grupo.toLowerCase() : grupo,
+      );
+    }
 
     // Para criação de usuário, verifica o grupo do body
-    const targetGroup = request.body?.grupo;
-    if (targetGroup) {
-      return this.checkCreationPermissions(userRole, targetGroup);
+    const targetGroups = request.body?.grupos;
+    if (targetGroups && targetGroups.length > 0) {
+      return this.checkCreationPermissions(userRole, targetGroups);
     }
 
     // Para outras operações (enable/disable), verifica o grupo do usuário alvo
-    const targetCpf = request.body?.cpf || request.params?.cpf;
-    if (targetCpf) {
+    const targetLogin = request.body?.login || request.params?.login;
+    if (targetLogin) {
       try {
-        const targetUserGroup = await this.usersService.getUserGroup(targetCpf);
-        return this.checkManagementPermissions(userRole, targetUserGroup);
+        const targetUserGroups =
+          await this.usersService.getUserGroup(targetLogin);
+        return this.checkManagementPermissions(userRole, targetUserGroups);
       } catch (error) {
         // Se não conseguir obter o grupo do usuário, nega o acesso
         throw new ForbiddenException('Não foi possível verificar permissões');
@@ -41,22 +49,27 @@ export class UserManagementGuard implements CanActivate {
   }
 
   private checkCreationPermissions(
-    userRole: string,
-    targetGroup: string,
+    userRoles: string[],
+    targetGroups: string[],
   ): boolean {
-    if (!userRole || !targetGroup) {
+    if (
+      !userRoles ||
+      userRoles.length === 0 ||
+      !targetGroups ||
+      targetGroups.length === 0
+    ) {
       throw new ForbiddenException('Informações de usuário insuficientes');
     }
 
     // ADMINISTRATORS podem criar qualquer tipo de usuário
-    if (userRole === UserGroups.ADMINISTRATORS) {
+    if (userRoles.some((role) => role === UserGroups.ADMINISTRATORS)) {
       return true;
     }
 
     // MANAGERS podem criar apenas EMPLOYEES
     if (
-      userRole === UserGroups.MANAGERS &&
-      targetGroup === UserGroups.EMPLOYEES
+      userRoles.some((role) => role === UserGroups.MANAGERS) &&
+      targetGroups.includes(UserGroups.EMPLOYEES)
     ) {
       return true;
     }
@@ -68,9 +81,9 @@ export class UserManagementGuard implements CanActivate {
 
   private checkManagementPermissions(
     userRole: string,
-    targetUserGroup: string,
+    targetUserGroups: string[],
   ): boolean {
-    if (!userRole || !targetUserGroup) {
+    if (!userRole || !targetUserGroups || targetUserGroups.length === 0) {
       throw new ForbiddenException('Informações de usuário insuficientes');
     }
 
@@ -82,7 +95,7 @@ export class UserManagementGuard implements CanActivate {
     // MANAGERS podem gerenciar apenas EMPLOYEES
     if (
       userRole === UserGroups.MANAGERS &&
-      targetUserGroup === UserGroups.EMPLOYEES
+      targetUserGroups.includes(UserGroups.EMPLOYEES)
     ) {
       return true;
     }

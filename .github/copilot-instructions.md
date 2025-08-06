@@ -1,0 +1,4 @@
+- Não gerar código desnecessário ou redundante.
+- Evitar gerar código que já foi removido ou que não está mais em uso.
+- Não criar arquivo de documentação sem que seja explicitamente solicitado.
+- Altere o documento postman apenas quando houver uma solicitação específica para isso.
