@@ -8,7 +8,7 @@ import {
   IsString,
   Matches,
 } from 'class-validator';
-import { UserGroups } from '../../../core';
+import { UserGroups } from '../../../../core';
 
 export class CreateUserDto {
   @IsString()

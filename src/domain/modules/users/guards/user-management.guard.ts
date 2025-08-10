@@ -5,7 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { UserGroups } from '../../../core';
+import { UserGroups } from '../../../../core';
 import { UsersService } from '../users.service';
 
 @Injectable()
@@ -37,7 +37,7 @@ export class UserManagementGuard implements CanActivate {
     if (targetLogin) {
       try {
         const targetUserGroups =
-          await this.usersService.getUserGroup(targetLogin);
+          await this.usersService.getUserGroups(targetLogin);
         return this.checkManagementPermissions(userRole, targetUserGroups);
       } catch (error) {
         // Se não conseguir obter o grupo do usuário, nega o acesso

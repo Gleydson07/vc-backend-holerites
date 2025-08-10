@@ -8,6 +8,7 @@ import {
   AdminRemoveUserFromGroupCommand,
   AdminUpdateUserAttributesCommand,
   CognitoIdentityProviderClient,
+  ListUsersInGroupCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import {
   BadRequestException,
@@ -280,15 +281,12 @@ export class UsersService {
 
   async setUserGroups(login: string, novosGrupos: string[]) {
     try {
-      // Primeiro, obter os grupos atuais do usuário
       const gruposAtuais = await this.getUserGroups(login);
 
-      // Remover de todos os grupos atuais
       if (gruposAtuais.length > 0) {
         await this.removeUserFromGroups(login, gruposAtuais);
       }
 
-      // Adicionar aos novos grupos
       await this.addUserToGroups(login, novosGrupos);
 
       return {
@@ -329,7 +327,6 @@ export class UsersService {
     try {
       const response = await this.cognitoClient.send(command);
 
-      // Retorna todos os grupos do usuário
       if (response.Groups && response.Groups.length > 0) {
         return response.Groups.map((group) => group.GroupName || '').filter(
           (name) => name !== '',
@@ -349,13 +346,48 @@ export class UsersService {
     }
   }
 
-  async getUserGroup(login: string): Promise<string[]> {
-    const grupos = await this.getUserGroups(login);
+  async listUsersByGroup(
+    groupName: string,
+    params: {
+      nome?: string;
+      login?: string;
+      ativo?: boolean;
+      cursor?: string;
+      limit: number;
+    },
+  ) {
+    const { cursor, limit } = params;
 
-    if (grupos.length === 0) {
-      throw new NotFoundException('Usuário não pertence a nenhum grupo');
-    }
+    const command = new ListUsersInGroupCommand({
+      UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
+      GroupName: groupName,
+      Limit: Math.min(60, limit), // Cognito max é 60
+      NextToken: cursor,
+    });
 
-    return grupos;
+    const response = await this.cognitoClient.send(command);
+    const users = response.Users || [];
+
+    const usersWithGroups = users.map((user) => ({
+      login: user.Username,
+      nome: user.Attributes?.find((attr) => attr.Name === 'name')?.Value,
+      email: user.Attributes?.find((attr) => attr.Name === 'email')?.Value,
+      ativo: user.Enabled,
+      status:
+        user.UserStatus === 'FORCE_CHANGE_PASSWORD'
+          ? 'Mudança de senha pendente'
+          : user.UserStatus,
+      createdAt: user.UserCreateDate,
+      lastModified: user.UserLastModifiedDate,
+    }));
+
+    return {
+      users: usersWithGroups,
+      pagination: {
+        nextCursor: response.NextToken,
+        hasMore: !!response.NextToken,
+        itemsPerPage: limit,
+      },
+    };
   }
 }
