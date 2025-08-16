@@ -5,7 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { UserGroups } from '../../../../core';
+import { UserGroups } from '../../../../core/enums';
 import { UsersService } from '../users.service';
 
 @Injectable()

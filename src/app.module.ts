@@ -6,12 +6,14 @@ import { UsersModule } from '@/domain/modules/users/users.module';
 import { TenantsModule } from '@/domain/modules/tenants/tenants.module';
 import { PayslipsModule } from '@/domain/modules/payslips/payslips.module';
 import { JwtAuthGuard } from '@/domain/modules/auth/guards/jwt-auth.guard';
+import { DatabaseModule } from './infra/database/database.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    DatabaseModule,
     AuthModule,
     UsersModule,
     TenantsModule,

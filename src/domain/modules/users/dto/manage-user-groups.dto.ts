@@ -6,7 +6,7 @@ import {
   ArrayNotEmpty,
   IsEnum,
 } from 'class-validator';
-import { UserGroups } from '../../../../core';
+import { UserGroups } from '../../../../core/enums';
 
 export class AddUserToGroupsDto {
   @IsString()
