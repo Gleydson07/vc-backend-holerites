@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { PrismaService } from '@/infra/database/prisma/prisma.service';
+import { IS_TENANT_OPTIONAL_KEY } from '../decorators/skip-tenant.decorator';
 
 @Injectable()
 export class TenantGuard implements CanActivate {
@@ -19,7 +20,6 @@ export class TenantGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
 
-    const IS_TENANT_OPTIONAL_KEY = 'JKF4383S#9JKHD!0UBD!$09REM';
     const skipTenant = this.reflector.getAllAndOverride<boolean>(
       IS_TENANT_OPTIONAL_KEY,
       [context.getHandler(), context.getClass()],

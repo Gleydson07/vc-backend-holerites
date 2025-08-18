@@ -1,16 +1,17 @@
-import { Controller, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
+import { CreateTenantDto } from './dto/create-tenant.dto';
+import { CreateTenantWithUserAdminUseCase } from './usecases/create-tenant-with-user-admin.usecase';
 
 @Controller()
-@UseGuards()
 export class TenantsController {
-  constructor() {}
+  constructor(
+    private readonly createTenantWithUserAdminUseCase: CreateTenantWithUserAdminUseCase,
+  ) {}
 
-  // @Post()
-  // @Roles('master')
-  // @SkipTenant()
-  // create(@Body() createTenantDto: CreateTenantDto) {
-  //   return this.tenantsService.create(createTenantDto);
-  // }
+  @Post()
+  create(@Body() createTenantDto: CreateTenantDto) {
+    return this.createTenantWithUserAdminUseCase.execute(createTenantDto);
+  }
 
   // @Get()
   // @SkipTenant()

@@ -5,7 +5,7 @@ import { AuthModule } from '@/domain/modules/auth/auth.module';
 import { UsersModule } from '@/domain/modules/users/users.module';
 import { TenantsModule } from '@/domain/modules/tenants/tenants.module';
 import { DatabaseModule } from './infra/database/database.module';
-import { TenantGuard } from './domain/modules/auth/guards/tenant.guard';
+import { UnifiedAuthGuard } from './domain/modules/auth/guards/unified.guard';
 
 @Module({
   imports: [
@@ -29,7 +29,7 @@ import { TenantGuard } from './domain/modules/auth/guards/tenant.guard';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: TenantGuard,
+      useClass: UnifiedAuthGuard,
     },
   ],
 })
