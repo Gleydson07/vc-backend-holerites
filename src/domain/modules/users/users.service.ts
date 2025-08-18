@@ -1,6 +1,7 @@
 import {
   AdminAddUserToGroupCommand,
   AdminCreateUserCommand,
+  AdminCreateUserCommandOutput,
   AdminDeleteUserCommand,
   AdminDisableUserCommand,
   AdminEnableUserCommand,
@@ -17,12 +18,18 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from './dto/create-user.dto';
+import { PrismaService } from '@/infra/database/prisma/prisma.service';
+import { AccessProfile } from '@prisma/client';
+import { UserRole } from '@/core/enums';
 
 @Injectable()
 export class UsersService {
   private readonly cognitoClient: CognitoIdentityProviderClient;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {
     const region = this.configService.get<string>('COGNITO_REGION');
     const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
     const secretAccessKey = this.configService.get<string>(
@@ -42,9 +49,14 @@ export class UsersService {
     });
   }
 
-  async create({ login, email, nome, grupos }: CreateUserDto) {
+  async create(
+    tenantId: string,
+    { login, name, role, email, phone }: CreateUserDto,
+  ) {
+    const roleLowercase = role.toLowerCase() as UserRole;
     const givenName =
-      `${nome.split(' ')[0]} ${nome.split(' ')[1] || ''}`.trim();
+      `${name.split(' ')[0]} ${name.split(' ')[1] || ''}`.trim();
+
     const provisionalPassword = (
       givenName.at(0)?.toUpperCase() +
       givenName.slice(1, 4).trim().toLowerCase() +
@@ -58,52 +70,60 @@ export class UsersService {
       UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
       Username: login,
       TemporaryPassword: provisionalPassword,
-      UserAttributes: [
-        { Name: 'name', Value: nome },
-        { Name: 'given_name', Value: givenName },
-        ...(email
-          ? [
-              { Name: 'email', Value: email },
-              { Name: 'email_verified', Value: 'true' },
-            ]
-          : []),
-      ],
+      UserAttributes: [{ Name: 'email', Value: email || '' }],
       MessageAction: 'SUPPRESS',
     });
 
     const tempPassword = createUserCommand.input.TemporaryPassword;
 
     try {
-      const createUserResponse =
+      const createUserResponse: AdminCreateUserCommandOutput =
         await this.cognitoClient.send(createUserCommand);
 
-      const addToGroupPromises = grupos.map((grupo) => {
-        const addUserToGroupCommand = new AdminAddUserToGroupCommand({
-          UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-          Username: login,
-          GroupName: grupo,
-        });
-        return this.cognitoClient.send(addUserToGroupCommand);
+      const sub = createUserResponse.User?.Attributes?.find(
+        (attr) => attr.Name === 'sub',
+      )?.Value;
+
+      if (!sub) {
+        throw new BadRequestException(
+          'Usuário criado no Cognito, mas sub não retornado.',
+        );
+      }
+
+      const user = await this.prisma.user.create({
+        data: {
+          userProviderId: sub,
+          username: login,
+          nickname: name,
+        },
       });
 
-      await Promise.all(addToGroupPromises);
-
-      const userAttributes = createUserResponse.User?.Attributes?.map(
-        (attr) => {
-          if (attr.Name && ['sub', 'name', 'email'].includes(attr.Name)) {
-            return {
-              [attr.Name]: attr.Value,
-            };
-          }
+      await this.prisma.userTenant.create({
+        data: {
+          userId: user.id,
+          tenantId: tenantId,
+          accessProfile: AccessProfile.EMPLOYEE,
         },
-      );
+      });
+
+      if (roleLowercase === UserRole.EMPLOYEES) {
+        await this.prisma.employee.create({
+          data: {
+            tenantId: tenantId,
+            userId: user.id,
+            cpf: login,
+            fullName: name,
+            email: email || null,
+            phone: phone || null,
+          },
+        });
+      }
 
       return {
         login: createUserResponse.User?.Username,
         senhaTemporaria: tempPassword,
-        nome: userAttributes?.[0]?.name,
-        email: userAttributes?.[0]?.email,
-        grupos: grupos,
+        nome: name,
+        role: role,
         message: `Será solicitado que o usuário ${givenName} altere a senha temporária na primeira vez que fizer login.`,
       };
     } catch (error) {
@@ -117,23 +137,23 @@ export class UsersService {
         error.name === 'ResourceNotFoundException' ||
         error.name === 'InvalidParameterException'
       ) {
-        const deleteUserCommand = new AdminDeleteUserCommand({
-          UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
-          Username: login,
-        });
-
         try {
+          const deleteUserCommand = new AdminDeleteUserCommand({
+            UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
+            Username: login,
+          });
+
           await this.cognitoClient.send(deleteUserCommand);
         } catch (deleteError) {
           console.error(
-            'Erro ao deletar usuário após falha na adição ao grupo:',
+            'Erro ao deletar usuário após falha na adição a role:',
             deleteError,
           );
         }
       }
 
       throw new BadRequestException(
-        'Erro ao criar usuário ou atribuir grupos: ' + error.message,
+        'Erro ao criar usuário ou atribuir roles: ' + error.message,
       );
     }
   }

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, MinLength, Matches } from 'class-validator';
+import { IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
 
 export class SignInDto {
   @IsString()
@@ -15,5 +15,5 @@ export class SignInDto {
     message:
       'Senha deve conter pelo menos: 1 letra minúscula, 1 maiúscula, 1 número e no mínimo 6 caracteres',
   })
-  senha: string;
+  password: string;
 }

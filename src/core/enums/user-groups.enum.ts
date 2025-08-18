@@ -1,13 +1,13 @@
-export enum UserGroups {
-  ADMINISTRATORS = 'administradores',
-  MANAGERS = 'gestores',
-  EMPLOYEES = 'colaboradores',
+export enum UserRole {
+  ADMINISTRATORS = 'admin',
+  MANAGERS = 'manager',
+  EMPLOYEES = 'employee',
 }
 
-export const USER_GROUPS = {
-  ADMINISTRATORS: UserGroups.ADMINISTRATORS,
-  MANAGERS: UserGroups.MANAGERS,
-  EMPLOYEES: UserGroups.EMPLOYEES,
+export const USER_ROLES = {
+  ADMINISTRATORS: UserRole.ADMINISTRATORS,
+  MANAGERS: UserRole.MANAGERS,
+  EMPLOYEES: UserRole.EMPLOYEES,
 } as const;
 
-export type UserGroupType = keyof typeof USER_GROUPS;
+export type UserRoleType = keyof typeof USER_ROLES;

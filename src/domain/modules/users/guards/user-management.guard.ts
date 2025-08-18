@@ -5,8 +5,8 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { UserGroups } from '../../../../core/enums';
 import { UsersService } from '../users.service';
+import { UserRole } from '@/core/enums';
 
 @Injectable()
 export class UserManagementGuard implements CanActivate {
@@ -62,14 +62,14 @@ export class UserManagementGuard implements CanActivate {
     }
 
     // ADMINISTRATORS podem criar qualquer tipo de usuário
-    if (userRoles.some((role) => role === UserGroups.ADMINISTRATORS)) {
+    if (userRoles.some((role) => role === UserRole.ADMINISTRATORS)) {
       return true;
     }
 
     // MANAGERS podem criar apenas EMPLOYEES
     if (
-      userRoles.some((role) => role === UserGroups.MANAGERS) &&
-      targetGroups.includes(UserGroups.EMPLOYEES)
+      userRoles.some((role) => role === UserRole.MANAGERS) &&
+      targetGroups.includes(UserRole.EMPLOYEES)
     ) {
       return true;
     }
@@ -88,14 +88,14 @@ export class UserManagementGuard implements CanActivate {
     }
 
     // ADMINISTRATORS podem gerenciar qualquer tipo de usuário
-    if (userRole === UserGroups.ADMINISTRATORS) {
+    if (userRole === UserRole.ADMINISTRATORS) {
       return true;
     }
 
     // MANAGERS podem gerenciar apenas EMPLOYEES
     if (
-      userRole === UserGroups.MANAGERS &&
-      targetUserGroups.includes(UserGroups.EMPLOYEES)
+      userRole === UserRole.MANAGERS &&
+      targetUserGroups.includes(UserRole.EMPLOYEES)
     ) {
       return true;
     }

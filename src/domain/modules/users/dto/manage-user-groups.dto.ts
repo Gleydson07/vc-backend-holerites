@@ -1,3 +1,4 @@
+import { UserRole } from '@/core/enums';
 import {
   IsString,
   IsNotEmpty,
@@ -6,7 +7,6 @@ import {
   ArrayNotEmpty,
   IsEnum,
 } from 'class-validator';
-import { UserGroups } from '../../../../core/enums';
 
 export class AddUserToGroupsDto {
   @IsString()
@@ -17,29 +17,29 @@ export class AddUserToGroupsDto {
   login: string;
 
   @IsArray()
-  @ArrayNotEmpty({ message: 'Pelo menos um grupo deve ser fornecido' })
-  @IsEnum(UserGroups, {
+  @ArrayNotEmpty({ message: 'Pelo menos um papel deve ser fornecido' })
+  @IsEnum(UserRole, {
     each: true,
-    message: `Cada grupo deve ser um dos seguintes: ${Object.values(UserGroups).join(', ')}`,
+    message: `Cada papel deve ser um dos seguintes: ${Object.values(UserRole).join(', ')}`,
   })
-  grupos: UserGroups[];
+  grupos: UserRole[];
 }
 
 export class RemoveUserFromGroupsDto {
   @IsString()
   @IsNotEmpty()
   @Matches(/^\d{11}$/, {
-    message: 'Login(CPF) deve conter exatamente 11 dígitos',
+    message: 'Login deve conter exatamente 11 dígitos',
   })
   login: string;
 
   @IsArray()
-  @ArrayNotEmpty({ message: 'Pelo menos um grupo deve ser fornecido' })
-  @IsEnum(UserGroups, {
+  @ArrayNotEmpty({ message: 'Pelo menos um papel deve ser fornecido' })
+  @IsEnum(UserRole, {
     each: true,
-    message: `Cada grupo deve ser um dos seguintes: ${Object.values(UserGroups).join(', ')}`,
+    message: `Cada papel deve ser um dos seguintes: ${Object.values(UserRole).join(', ')}`,
   })
-  grupos: UserGroups[];
+  grupos: UserRole[];
 }
 
 export class SetUserGroupsDto {
@@ -51,10 +51,10 @@ export class SetUserGroupsDto {
   login: string;
 
   @IsArray()
-  @ArrayNotEmpty({ message: 'Pelo menos um grupo deve ser fornecido' })
-  @IsEnum(UserGroups, {
+  @ArrayNotEmpty({ message: 'Pelo menos um papel deve ser fornecido' })
+  @IsEnum(UserRole, {
     each: true,
-    message: `Cada grupo deve ser um dos seguintes: ${Object.values(UserGroups).join(', ')}`,
+    message: `Cada papel deve ser um dos seguintes: ${Object.values(UserRole).join(', ')}`,
   })
-  grupos: UserGroups[];
+  grupos: UserRole[];
 }

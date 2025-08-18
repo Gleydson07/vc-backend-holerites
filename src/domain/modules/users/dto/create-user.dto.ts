@@ -1,36 +1,54 @@
+import { UserRole } from '@/core/enums';
 import {
-  ArrayNotEmpty,
-  IsArray,
   IsEmail,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
 } from 'class-validator';
-import { UserGroups } from '../../../../core/enums';
+
+@ValidatorConstraint({ name: 'EmailOrPhone', async: false })
+class EmailOrPhoneConstraint implements ValidatorConstraintInterface {
+  validate(_: any, args: ValidationArguments) {
+    const obj = args.object as any;
+    return !!(obj.email || obj.phone);
+  }
+  defaultMessage(args: ValidationArguments) {
+    return 'É obrigatório informar pelo menos email ou telefone.';
+  }
+}
 
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   @Matches(/^\d{11}$/, {
-    message: 'Login(CPF) deve conter exatamente 11 dígitos',
+    message: 'Login deve conter exatamente 11 dígitos',
   })
   login: string;
 
-  @IsOptional()
-  @IsEmail({}, { message: 'Email deve ter um formato válido' })
-  email?: string;
-
   @IsString()
   @IsNotEmpty()
-  nome: string;
+  name: string;
 
-  @IsArray()
-  @ArrayNotEmpty({ message: 'Pelo menos um grupo deve ser fornecido' })
-  @IsEnum(UserGroups, {
-    each: true,
-    message: `Cada grupo deve ser um dos seguintes: ${Object.values(UserGroups).join(', ')}`,
+  @IsNotEmpty()
+  @IsEmail({}, { message: 'Email deve ter um formato válido' })
+  email: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\+\d{8,15}$/, {
+    message: 'O telefone deve estar no formato +5511912345678',
   })
-  grupos: UserGroups[];
+  phone?: string;
+
+  @IsString()
+  @IsEnum(UserRole, {
+    message: `Cada papel deve ser um dos seguintes: ${Object.values(UserRole).join(', ')}`,
+  })
+  role: UserRole;
 }

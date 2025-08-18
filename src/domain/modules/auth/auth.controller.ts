@@ -1,28 +1,33 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
-import { SignInDto } from './dto/create-auth.dto';
-import { NewPasswordChallengeDto } from './dto/new-password-challenge.dto';
+import { TenantId } from './decorators/tenant-id.decorator';
+import { SignInUseCase } from './usecases/sign-in.usecase';
+import { SignInDto } from './usecases/dto/sign-in.dto';
+import { FirstAccessChallengeUseCase } from './usecases/first-access-challenge.usecase';
+import { FirstAccessChallengeDto } from './usecases/dto/first-access-challenge.dto';
 
 @Controller()
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly signInUseCase: SignInUseCase,
+    private readonly firstAccessChallengeUseCase: FirstAccessChallengeUseCase,
+  ) {}
 
   @Public()
   @Post('signin')
-  async signIn(@Body() signInDto: SignInDto) {
-    return this.authService.signIn(signInDto.login, signInDto.senha);
+  async signIn(@Body() signInDto: SignInDto, @TenantId() tenantId: string) {
+    return this.signInUseCase.execute(signInDto, tenantId);
   }
 
   @Public()
-  @Post('new-password-challenge') // Necessário quando o método signin retorna NEW_PASSWORD_REQUIRED
+  @Post('challenge')
   async respondToNewPasswordChallenge(
-    @Body() newPasswordChallengeDto: NewPasswordChallengeDto,
+    @Body() firstAccessChallengeDto: FirstAccessChallengeDto,
+    @TenantId() tenantId: string,
   ) {
-    return this.authService.respondToNewPasswordChallenge(
-      newPasswordChallengeDto.login,
-      newPasswordChallengeDto.novaSenha,
-      newPasswordChallengeDto.session,
+    return this.firstAccessChallengeUseCase.execute(
+      firstAccessChallengeDto,
+      tenantId,
     );
   }
 }

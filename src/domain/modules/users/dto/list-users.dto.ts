@@ -1,3 +1,4 @@
+import { UserRole } from '@/core/enums';
 import { Transform } from 'class-transformer';
 import {
   IsOptional,
@@ -7,14 +8,13 @@ import {
   IsNotEmpty,
   IsEnum,
 } from 'class-validator';
-import { UserGroups } from '../../../../core/enums/user-groups.enum';
 
 export class ListUsersDto {
-  @IsEnum(UserGroups, {
-    message: `Grupo inválido. Valores permitidos: ${Object.values(UserGroups).join(', ')}.`,
+  @IsEnum(UserRole, {
+    message: `Papel inválido. Valores permitidos: ${Object.values(UserRole).join(', ')}.`,
   })
-  @IsNotEmpty({ message: 'Grupo é obrigatório' })
-  grupo: UserGroups;
+  @IsNotEmpty({ message: 'Papel é obrigatório' })
+  papel: UserRole;
 
   @IsOptional()
   @IsString()

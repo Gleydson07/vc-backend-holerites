@@ -1,6 +1,6 @@
 export class SessionResponseDto {
   id: string;
-  nomeCompleto: string;
-  primeiroNome: string;
-  grupos: string[];
+  name: string;
+  userProviderId: string;
+  role: string;
 }
