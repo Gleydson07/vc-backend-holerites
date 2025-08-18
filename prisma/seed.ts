@@ -11,14 +11,16 @@ async function main() {
 
   const username = process.env.MASTER_USERNAME || 'master';
   const nickname = process.env.MASTER_NICKNAME || 'Master User';
+  const email = process.env.MASTER_EMAIL || 'mail@mail.com';
 
   const user = await prisma.user.upsert({
     where: { userProviderId: providerId },
-    update: { isMaster: true, username, nickname },
+    update: { isMaster: true, username, nickname, email },
     create: {
       userProviderId: providerId,
       username,
       nickname,
+      email,
       isMaster: true,
     },
   });

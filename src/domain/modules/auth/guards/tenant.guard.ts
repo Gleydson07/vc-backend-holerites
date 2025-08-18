@@ -19,7 +19,7 @@ export class TenantGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
 
-    const IS_TENANT_OPTIONAL_KEY = 'tenant_optional_key_01';
+    const IS_TENANT_OPTIONAL_KEY = 'JKF4383S#9JKHD!0UBD!$09REM';
     const skipTenant = this.reflector.getAllAndOverride<boolean>(
       IS_TENANT_OPTIONAL_KEY,
       [context.getHandler(), context.getClass()],
