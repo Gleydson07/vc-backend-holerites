@@ -1,6 +1,5 @@
 export class ResponseGetUserWithTenantsRepositoryDto {
   id: string;
-  isMaster: boolean;
   username: string;
   nickname: string;
   userProviderId: string;

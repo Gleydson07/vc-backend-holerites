@@ -10,7 +10,6 @@ export class ResponseCreateUserRepositoryDto {
   username: string;
   nickname: string;
   email: string;
-  phone?: string;
   userProviderId: string;
   createdAt: Date;
   updatedAt: Date | null;

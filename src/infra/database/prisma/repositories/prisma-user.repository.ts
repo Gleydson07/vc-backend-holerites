@@ -10,12 +10,16 @@ import { ConfigService } from '@nestjs/config';
 import {
   AdminCreateUserCommand,
   AdminCreateUserCommandOutput,
+  AdminGetUserCommand,
+  AdminGetUserCommandOutput,
   CognitoIdentityProviderClient,
+  GetUserCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import {
   CreateUserProviderRepositoryDto,
   ResponseCreateUserProviderRepositoryDto,
 } from '@/domain/repositories/user/dto/create-user-provider-repository.dto';
+import { ResponseFindByUsernameUserRepositoryDto } from '@/domain/repositories/user/dto/find-by-username-repository.dto';
 
 @Injectable()
 export class PrismaUserRepository implements UserRepository {
@@ -107,7 +111,6 @@ export class PrismaUserRepository implements UserRepository {
       },
       select: {
         id: true,
-        isMaster: true,
         username: true,
         nickname: true,
         userProviderId: true,
@@ -117,6 +120,44 @@ export class PrismaUserRepository implements UserRepository {
             accessProfile: true,
           },
         },
+      },
+    });
+  }
+
+  async getUserProviderId(username: string): Promise<string | null> {
+    const getUserCommand = new AdminGetUserCommand({
+      UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
+      Username: username,
+    });
+
+    const getUserResponse: AdminGetUserCommandOutput =
+      await this.cognitoClient.send(getUserCommand);
+
+    if (!getUserResponse.UserAttributes) {
+      return null;
+    }
+
+    return (
+      getUserResponse.UserAttributes?.find((attr) => attr.Name === 'sub')
+        ?.Value ?? null
+    );
+  }
+
+  async findByUserProviderId(
+    data: string,
+  ): Promise<ResponseFindByUsernameUserRepositoryDto | null> {
+    return this.prismaService.user.findFirst({
+      where: {
+        userProviderId: data,
+      },
+      select: {
+        id: true,
+        username: true,
+        nickname: true,
+        email: true,
+        userProviderId: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
   }

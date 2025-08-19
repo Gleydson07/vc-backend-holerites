@@ -2,6 +2,7 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthRepository } from '@/domain/repositories/auth/auth.repository';
 import { UserRepository } from '@/domain/repositories/user/user.repository';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SignInUseCase {
@@ -10,6 +11,7 @@ export class SignInUseCase {
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly userRepository: UserRepository,
+    private readonly configService: ConfigService,
   ) {}
 
   async execute(data: SignInDto, tenantId: string) {
@@ -37,7 +39,14 @@ export class SignInUseCase {
           }
         | undefined = undefined;
       if (userData) {
-        if (!userData?.isMaster && !userData.userTenants.length) {
+        const userEnvProviderId = this.configService.get<string>(
+          'MASTER_USER_PROVIDER_ID',
+        );
+
+        if (
+          !(userData?.userProviderId === userEnvProviderId) &&
+          !userData.userTenants.length
+        ) {
           this.logger.warn(`Usuário não tem vínculo com tenants.`);
           throw new UnauthorizedException('Login ou senha inválidos.');
         }

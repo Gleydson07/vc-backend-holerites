@@ -37,7 +37,6 @@ CREATE TABLE "public"."users" (
     "nickname" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "last_login_at" TIMESTAMP(3),
-    "is_master" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3),
 
@@ -49,7 +48,7 @@ CREATE TABLE "public"."user_tenants" (
     "tenant_id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "access_profile" "public"."AccessProfile" NOT NULL,
-    "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3),
 
     CONSTRAINT "user_tenants_pkey" PRIMARY KEY ("tenant_id","user_id")
@@ -69,6 +68,9 @@ CREATE TABLE "public"."employees" (
 
     CONSTRAINT "employees_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "tenants_cnpj_key" ON "public"."tenants"("cnpj");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_user_provider_id_key" ON "public"."users"("user_provider_id");

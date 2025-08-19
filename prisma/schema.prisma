@@ -70,7 +70,6 @@ model User {
   nickname       String    @map("nickname")
   email          String    @map("email")
   lastLoginAt    DateTime? @map("last_login_at")
-  isMaster       Boolean   @default(false) @map("is_master")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime? @updatedAt @map("updated_at")
 

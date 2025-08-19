@@ -5,6 +5,7 @@ import {
   CreateTenantRepositoryDto,
   ResponseCreateTenantRepositoryDto,
 } from '@/domain/repositories/tenant/dto/create-tenant-repository.dto';
+import { ResponseFindTenantByCnpjRepositoryDto } from '@/domain/repositories/tenant/dto/find-tenant-by-cnpj-repository.dto';
 
 @Injectable()
 export class PrismaTenantRepository implements TenantRepository {
@@ -18,6 +19,29 @@ export class PrismaTenantRepository implements TenantRepository {
         name: data.name,
         socialName: data.socialName,
         cnpj: data.cnpj,
+      },
+    });
+
+    if (!tenant) {
+      return null;
+    }
+
+    return {
+      id: tenant.id,
+      name: tenant.name,
+      socialName: tenant.socialName,
+      cnpj: tenant.cnpj,
+      createdAt: tenant.createdAt,
+      updatedAt: tenant.updatedAt,
+    };
+  }
+
+  async findByCnpj(
+    data: string,
+  ): Promise<ResponseFindTenantByCnpjRepositoryDto | null> {
+    const tenant = await this.prismaService.tenant.findUnique({
+      where: {
+        cnpj: data,
       },
     });
 

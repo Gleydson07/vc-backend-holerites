@@ -95,6 +95,7 @@ export class UsersService {
           userProviderId: sub,
           username: login,
           nickname: name,
+          email: email,
         },
       });
 
