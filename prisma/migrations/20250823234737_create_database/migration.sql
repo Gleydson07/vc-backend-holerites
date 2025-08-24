@@ -1,0 +1,88 @@
+-- CreateEnum
+CREATE TYPE "public"."StaffRole" AS ENUM ('admin', 'manager');
+
+-- CreateTable
+CREATE TABLE "public"."tenants" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "social_name" TEXT NOT NULL,
+    "cnpj" TEXT NOT NULL,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3),
+
+    CONSTRAINT "tenants_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."users" (
+    "id" TEXT NOT NULL,
+    "tenant_id" TEXT NOT NULL,
+    "username" TEXT NOT NULL,
+    "password_hash" TEXT NOT NULL,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."employees" (
+    "id" TEXT NOT NULL,
+    "tenant_id" TEXT NOT NULL,
+    "user_id" TEXT,
+    "cpf" TEXT NOT NULL,
+    "full_name" TEXT NOT NULL,
+    "email" TEXT,
+    "phone" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "employees_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."staff" (
+    "id" TEXT NOT NULL,
+    "tenant_id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "role" "public"."StaffRole" NOT NULL,
+    "full_name" TEXT NOT NULL,
+    "email" TEXT,
+    "phone" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "staff_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "tenants_cnpj_key" ON "public"."tenants"("cnpj");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_username_tenant_id_key" ON "public"."users"("username", "tenant_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "employees_cpf_tenant_id_key" ON "public"."employees"("cpf", "tenant_id");
+
+-- CreateIndex
+CREATE INDEX "staff_tenant_id_role_idx" ON "public"."staff"("tenant_id", "role");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "staff_tenant_id_user_id_key" ON "public"."staff"("tenant_id", "user_id");
+
+-- AddForeignKey
+ALTER TABLE "public"."users" ADD CONSTRAINT "users_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "public"."tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."employees" ADD CONSTRAINT "employees_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "public"."tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."employees" ADD CONSTRAINT "employees_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."staff" ADD CONSTRAINT "staff_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "public"."tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."staff" ADD CONSTRAINT "staff_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

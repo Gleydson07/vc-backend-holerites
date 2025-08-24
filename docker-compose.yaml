@@ -1,0 +1,22 @@
+services:
+  postgres:
+    container_name: holerites-db
+    image: postgres:17.0
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
+    ports:
+      - '${DB_PORT}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  external_net:
+    external: true

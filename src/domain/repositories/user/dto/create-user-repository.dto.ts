@@ -1,16 +1,23 @@
+import { IsNotEmpty, IsString } from 'class-validator';
+
 export class CreateUserRepositoryDto {
+  @IsString()
+  @IsNotEmpty()
+  tenantId: string;
+
+  @IsString()
+  @IsNotEmpty()
   username: string;
-  nickname: string;
-  email: string;
-  userProviderId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  passwordHash: string;
 }
 
 export class ResponseCreateUserRepositoryDto {
   id: string;
+  tenantId: string;
   username: string;
-  nickname: string;
-  email: string;
-  userProviderId: string;
   createdAt: Date;
   updatedAt: Date | null;
 }

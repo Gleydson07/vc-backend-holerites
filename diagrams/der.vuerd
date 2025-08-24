@@ -10,7 +10,7 @@
     "show": 431,
     "database": 4,
     "databaseName": "db_holerites",
-    "canvasType": "@dineug/erd-editor/builtin-schema-sql",
+    "canvasType": "ERD",
     "language": 1,
     "tableNameCase": 4,
     "columnNameCase": 2,
@@ -217,7 +217,6 @@
         "comment": "",
         "columnIds": [
           "LZT6aALYgMBd0pD7Kupz6",
-          "-ylLS31bbKTm6O8kMfBB4",
           "iYYt2T4yVW7gZ65NzzGk3",
           "ZOSYqtvGYUT-9PPTuZyaa",
           "8ynM1AxWUhe82AdSTM4-W",
@@ -246,7 +245,7 @@
           "color": ""
         },
         "meta": {
-          "updateAt": 1754858415999,
+          "updateAt": 1755993702230,
           "createAt": 1754854473479
         }
       },
@@ -2075,7 +2074,7 @@
             "LZT6aALYgMBd0pD7Kupz6"
           ],
           "x": 1490.5129,
-          "y": 182.9497,
+          "y": 170.9497,
           "direction": 1
         },
         "end": {
@@ -2159,7 +2158,7 @@
             "LZT6aALYgMBd0pD7Kupz6"
           ],
           "x": 1676.5129,
-          "y": 282.9497,
+          "y": 258.9497,
           "direction": 8
         },
         "end": {

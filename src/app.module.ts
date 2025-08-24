@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD, RouterModule } from '@nestjs/core';
+import { RouterModule } from '@nestjs/core';
 import { AuthModule } from '@/domain/modules/auth/auth.module';
 import { UsersModule } from '@/domain/modules/users/users.module';
 import { TenantsModule } from '@/domain/modules/tenants/tenants.module';
 import { DatabaseModule } from './infra/database/database.module';
-import { UnifiedAuthGuard } from './domain/modules/auth/guards/unified.guard';
+import { EmployeesModule } from './domain/modules/employees/employees.module';
+import { StaffModule } from './domain/modules/staff/staff.module';
 
 @Module({
   imports: [
@@ -17,20 +18,14 @@ import { UnifiedAuthGuard } from './domain/modules/auth/guards/unified.guard';
     UsersModule,
     TenantsModule,
     RouterModule.register([
-      {
-        path: 'auth',
-        module: AuthModule,
-      },
+      { path: 'auth', module: AuthModule },
       { path: 'users', module: UsersModule },
       { path: 'tenants', module: TenantsModule },
     ]),
+    EmployeesModule,
+    StaffModule,
   ],
   controllers: [],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: UnifiedAuthGuard,
-    },
-  ],
+  providers: [],
 })
 export class AppModule {}

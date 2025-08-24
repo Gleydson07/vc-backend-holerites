@@ -7,42 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum BatchType {
-  HM   @map("hm") // Hora Mensal
-  HF   @map("hf") // Hora Fixa
-  H13  @map("h13") // Hora 13
-  HR   @map("hr") // Hora Reduzida
-  HA   @map("ha") // Hora Adicional
-  HPLR @map("hplr") // Hora Paga em Lote Reduzido
-}
-
-enum Recurrence {
-  MONTHLY @map("monthly")
-  YEARLY  @map("yearly")
-}
-
-enum PaymentMethod {
-  PIX         @map("pix")
-  DEBIT_CARD  @map("debit_card")
-  CREDIT_CARD @map("credit_card")
-}
-
-enum PaymentStatus {
-  APPROVED @map("approved")
-  FAILED   @map("failed")
-  PENDING  @map("pending")
-}
-
-enum SubscriptionStatus {
-  ACTIVE    @map("active")
-  OVERDUE   @map("overdue")
-  CANCELLED @map("cancelled")
-}
-
-enum AccessProfile {
-  ADMIN    @map("admin")
-  MANAGER  @map("manager")
-  EMPLOYEE @map("employee")
+enum StaffRole {
+  ADMIN   @map("admin")
+  MANAGER @map("manager")
 }
 
 model Tenant {
@@ -54,57 +21,41 @@ model Tenant {
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime? @updatedAt @map("updated_at")
 
-  employees   Employee[]
-  userTenants UserTenant[]
-  // tenantSubscriptions TenantSubscription[]
-  // payrollBatches      PayrollBatch[]
-  // payrolls            Payroll[]
+  employees Employee[]
+  User      User[]
+  Staff     Staff[]
 
   @@map("tenants")
 }
 
 model User {
-  id             String    @id @default(uuid())
-  userProviderId String    @unique @map("user_provider_id")
-  username       String    @unique @map("username")
-  nickname       String    @map("nickname")
-  email          String    @map("email")
-  lastLoginAt    DateTime? @map("last_login_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime? @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  username     String   @map("username")
+  passwordHash String   @map("password_hash")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  employees   Employee[]
-  userTenants UserTenant[]
+  staff     Staff[]
+  employees Employee[]
 
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([username, tenantId], name: "uq_user_username_tenant")
   @@map("users")
 }
 
-model UserTenant {
-  tenantId      String        @map("tenant_id")
-  userId        String        @map("user_id")
-  accessProfile AccessProfile @map("access_profile")
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime?     @updatedAt @map("updated_at")
-
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
-
-  @@id([tenantId, userId], name: "pk_user_tenant")
-  @@map("user_tenants")
-}
-
 model Employee {
-  id        String    @id @default(uuid())
-  tenantId  String    @map("tenant_id")
-  userId    String?   @map("user_id")
-  cpf       String    @map("cpf")
-  fullName  String    @map("full_name")
-  email     String?   @map("email")
-  phone     String?   @map("phone")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime? @updatedAt @map("updated_at")
-
-  // payrolls Payroll[]
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  userId    String?  @map("user_id")
+  cpf       String   @map("cpf")
+  fullName  String   @map("full_name")
+  email     String?  @map("email")
+  phone     String?  @map("phone")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
   user   User?  @relation(fields: [userId], references: [id])
@@ -113,81 +64,21 @@ model Employee {
   @@map("employees")
 }
 
-// model PayrollBatch {
-//   id            String     @id @default(uuid())
-//   tenantId      String
-//   referenceDate DateTime   @map("reference_date")
-//   batchType     BatchType?
-//   createdAt     DateTime   @default(now()) @map("created_at")
-//   updatedAt     DateTime?  @updatedAt @map("updated_at")
+model Staff {
+  id        String    @id @default(uuid())
+  tenantId  String    @map("tenant_id")
+  userId    String    @map("user_id")
+  role      StaffRole @map("role")
+  fullName  String    @map("full_name")
+  email     String?   @map("email")
+  phone     String?   @map("phone")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
-//   tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 
-//   @@map("payroll_batches")
-// }
-
-// model Payroll {
-//   id             String    @id @default(uuid())
-//   tenantId       String
-//   employeeId     String
-//   fileKey        String?   @map("file_key")
-//   generationDate DateTime? @map("generation_date")
-//   enabledAt      DateTime? @map("enabled_at")
-//   readAt         DateTime? @map("read_at")
-//   createdAt      DateTime  @default(now()) @map("created_at")
-//   updatedAt      DateTime? @updatedAt @map("updated_at")
-
-//   tenant   Tenant   @relation(fields: [tenantId], references: [id])
-//   employee Employee @relation(fields: [employeeId], references: [id])
-
-//   @@map("payrolls")
-// }
-
-// model Plan {
-//   id            String     @id @default(uuid())
-//   name          String
-//   description   String?
-//   price         Decimal    @db.Decimal(10, 2)
-//   recurrence    Recurrence
-//   employeeLimit Int?       @map("employee_limit")
-//   isActive      Boolean    @default(true) @map("is_active")
-//   createdAt     DateTime   @default(now()) @map("created_at")
-//   updatedAt     DateTime?  @updatedAt @map("updated_at")
-
-//   tenantSubscriptions TenantSubscription[]
-
-//   @@map("plans")
-// }
-
-// model TenantSubscription {
-//   id        String             @id @default(uuid())
-//   tenantId  String
-//   planId    String
-//   startDate DateTime?          @map("start_date")
-//   endDate   DateTime?          @map("end_date")
-//   status    SubscriptionStatus @default(ACTIVE)
-//   isActive  Boolean            @default(true) @map("is_active")
-//   createdAt DateTime           @default(now()) @map("created_at")
-//   updatedAt DateTime?          @updatedAt @map("updated_at")
-
-//   tenant         Tenant          @relation(fields: [tenantId], references: [id])
-//   plan           Plan            @relation(fields: [planId], references: [id])
-//   tenantPayments TenantPayment[]
-
-//   @@map("tenant_subscriptions")
-// }
-
-// model TenantPayment {
-//   id             String        @id @default(uuid())
-//   subscriptionId String
-//   paymentDate    DateTime
-//   amount         Decimal       @db.Decimal(10, 2)
-//   paymentMethod  PaymentMethod
-//   status         PaymentStatus
-//   createdAt      DateTime      @default(now()) @map("created_at")
-//   updatedAt      DateTime?     @updatedAt @map("updated_at")
-
-//   tenantSubscription TenantSubscription @relation(fields: [subscriptionId], references: [id])
-
-//   @@map("tenant_payments")
-// }
+  @@unique([tenantId, userId])
+  @@index([tenantId, role])
+  @@map("staff")
+}
