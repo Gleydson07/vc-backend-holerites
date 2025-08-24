@@ -1,10 +1,6 @@
-export const STAFF_ROLES = ['admin', 'user'] as const;
-export type StaffRoleType = (typeof STAFF_ROLES)[number];
-
-export interface StaffProps {
+export interface EmployeeProps {
   tenantId: string;
-  userId: string;
-  role: string;
+  userId?: string;
   cpf: string;
   fullName: string;
   email?: string;
@@ -13,11 +9,11 @@ export interface StaffProps {
   updatedAt?: Date | null;
 }
 
-export class StaffEntity {
+export class EmployeeEntity {
   private _id: string | undefined;
-  private _props: StaffProps;
+  private _props: EmployeeProps;
 
-  constructor(props: StaffProps, id?: string) {
+  constructor(props: EmployeeProps, id?: string) {
     this._id = id;
     this._props = {
       ...props,
@@ -37,24 +33,8 @@ export class StaffEntity {
     return this._props.tenantId;
   }
 
-  public get userId(): string {
+  public get userId(): string | undefined {
     return this._props.userId;
-  }
-
-  public get role(): string {
-    return this._props.role;
-  }
-
-  public set role(value: string) {
-    this._props.role = value.toUpperCase();
-  }
-
-  public get fullName(): string {
-    return this._props.fullName;
-  }
-
-  public set fullName(value: string) {
-    this._props.fullName = value;
   }
 
   public get cpf(): string {
@@ -63,6 +43,14 @@ export class StaffEntity {
 
   public set cpf(value: string) {
     this._props.cpf = value;
+  }
+
+  public get fullName(): string {
+    return this._props.fullName;
+  }
+
+  public set fullName(value: string) {
+    this._props.fullName = value;
   }
 
   public get email(): string | undefined {

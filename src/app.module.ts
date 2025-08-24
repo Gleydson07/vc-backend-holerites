@@ -25,6 +25,7 @@ import { TransactionModule } from './domain/managers/transaction/transaction.mod
       { path: 'auth', module: AuthModule },
       { path: 'tenants', module: TenantsModule },
       { path: 'staff', module: StaffModule },
+      { path: 'employees', module: EmployeesModule },
     ]),
   ],
   controllers: [],

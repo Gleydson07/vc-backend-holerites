@@ -27,7 +27,7 @@ export class CreateStaffUserUseCase {
           const userEntity = new UserEntity({
             tenantId,
             passwordHash,
-            username: data.username,
+            username: data.cpf,
             isActive: true,
           });
 
@@ -40,6 +40,7 @@ export class CreateStaffUserUseCase {
           const staffEntity = new StaffEntity({
             tenantId,
             userId: user.id,
+            cpf: data.cpf,
             role: data.role,
             fullName: data.fullName,
             email: data.email,
@@ -55,7 +56,7 @@ export class CreateStaffUserUseCase {
           return {
             id: staff.id,
             fullName: staff.fullName,
-            username: user.username,
+            cpf: staff.cpf,
             email: staff.email,
             phone: staff.phone,
             role: staff.role,

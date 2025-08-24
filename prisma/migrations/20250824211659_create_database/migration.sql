@@ -47,6 +47,7 @@ CREATE TABLE "public"."staff" (
     "id" TEXT NOT NULL,
     "tenant_id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
+    "cpf" TEXT NOT NULL,
     "role" "public"."StaffRole" NOT NULL,
     "full_name" TEXT NOT NULL,
     "email" TEXT,

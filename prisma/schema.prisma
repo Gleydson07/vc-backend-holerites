@@ -68,6 +68,7 @@ model Staff {
   id        String    @id @default(uuid())
   tenantId  String    @map("tenant_id")
   userId    String    @map("user_id")
+  cpf       String    @map("cpf")
   role      StaffRole @map("role")
   fullName  String    @map("full_name")
   email     String?   @map("email")

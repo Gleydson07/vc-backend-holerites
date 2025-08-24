@@ -29,6 +29,7 @@ export class PrismaStaffMapper {
     const props: StaffProps = {
       tenantId: raw.tenantId,
       userId: raw.userId,
+      cpf: raw.cpf,
       role: this.toStaffRoleType(raw.role),
       fullName: raw.fullName,
       email: raw.email ?? undefined,
@@ -45,6 +46,7 @@ export class PrismaStaffMapper {
       id: entity.id!,
       tenantId: entity.tenantId,
       userId: entity.userId,
+      cpf: entity.cpf,
       role: this.fromStaffRoleType(entity.role.toLowerCase() as StaffRoleType),
       fullName: entity.fullName,
       email: entity.email ?? null,

@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import {
-  CreateEmployeeRepositoryDto,
-  ResponseCreateEmployeeRepositoryDto,
-} from './dto/create-employee-repository.dto';
+import { EmployeeEntity } from '@/domain/entities/employee.entity';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export abstract class EmployeeRepository {
   abstract create(
-    data: CreateEmployeeRepositoryDto,
-  ): Promise<ResponseCreateEmployeeRepositoryDto | null>;
+    data: EmployeeEntity,
+    tx?: Prisma.TransactionClient,
+  ): Promise<EmployeeEntity | null>;
 }

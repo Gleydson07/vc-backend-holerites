@@ -26,7 +26,7 @@ export class CreateStaffDto {
 
   @IsString()
   @IsNotEmpty()
-  username: string;
+  cpf: string;
 
   @IsString()
   @IsNotEmpty()
