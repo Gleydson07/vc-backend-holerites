@@ -7,6 +7,7 @@ import { TenantsModule } from '@/domain/modules/tenants/tenants.module';
 import { DatabaseModule } from './infra/database/database.module';
 import { EmployeesModule } from './domain/modules/employees/employees.module';
 import { StaffModule } from './domain/modules/staff/staff.module';
+import { TransactionModule } from './domain/managers/transaction/transaction.module';
 
 @Module({
   imports: [
@@ -14,16 +15,17 @@ import { StaffModule } from './domain/modules/staff/staff.module';
       isGlobal: true,
     }),
     DatabaseModule,
+    TransactionModule,
     AuthModule,
     UsersModule,
+    EmployeesModule,
+    StaffModule,
     TenantsModule,
     RouterModule.register([
       { path: 'auth', module: AuthModule },
-      { path: 'users', module: UsersModule },
       { path: 'tenants', module: TenantsModule },
+      { path: 'staff', module: StaffModule },
     ]),
-    EmployeesModule,
-    StaffModule,
   ],
   controllers: [],
   providers: [],

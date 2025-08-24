@@ -1,14 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import {
-  CreateStaffRepositoryDto,
-  ResponseCreateStaffRepositoryDto,
-} from './dto/create-staff-repository.dto';
 import { Prisma } from '@prisma/client';
+import { StaffEntity } from '@/domain/entities/staff.entity';
 
 @Injectable()
 export abstract class StaffRepository {
   abstract create(
-    data: CreateStaffRepositoryDto,
+    data: StaffEntity,
     tx?: Prisma.TransactionClient,
-  ): Promise<ResponseCreateStaffRepositoryDto | null>;
+  ): Promise<StaffEntity | null>;
 }

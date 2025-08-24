@@ -2,34 +2,27 @@ import { Injectable } from '@nestjs/common';
 import { UserRepository } from '@/domain/repositories/user/user.repository';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
-import {
-  CreateUserRepositoryDto,
-  ResponseCreateUserRepositoryDto,
-} from '@/domain/repositories/user/dto/create-user-repository.dto';
+import { UserEntity } from '@/domain/entities/user.entity';
+import { PrismaUserMapper } from '../mappers/prisma-user.mapper';
 
 @Injectable()
 export class PrismaUserRepository implements UserRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(
-    data: CreateUserRepositoryDto,
+    data: UserEntity,
     tx?: Prisma.TransactionClient,
-  ): Promise<ResponseCreateUserRepositoryDto | null> {
+  ): Promise<UserEntity | null> {
     const client = tx ?? this.prismaService;
+
     const user = await client.user.create({
-      data,
+      data: PrismaUserMapper.toPrisma(data),
     });
 
     if (!user) {
       return null;
     }
 
-    return {
-      id: user.id,
-      tenantId: user.tenantId,
-      username: user.username,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
+    return PrismaUserMapper.toDomain(user);
   }
 }

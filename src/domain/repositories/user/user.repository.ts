@@ -1,16 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import {
-  CreateUserRepositoryDto,
-  ResponseCreateUserRepositoryDto,
-} from './dto/create-user-repository.dto';
 import { Prisma } from '@prisma/client';
+import { UserEntity } from '@/domain/entities/user.entity';
 
-export const SALT = 12;
+export const DEFAULT_ROUNDS = 12;
 
 @Injectable()
 export abstract class UserRepository {
   abstract create(
-    data: CreateUserRepositoryDto,
+    data: UserEntity,
     tx?: Prisma.TransactionClient,
-  ): Promise<ResponseCreateUserRepositoryDto | null>;
+  ): Promise<UserEntity | null>;
 }

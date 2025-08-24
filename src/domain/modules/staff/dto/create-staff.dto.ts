@@ -1,8 +1,5 @@
 import { TransformPhone } from '@/core/transformers/phone.transformer';
-import {
-  STAFF_ROLES,
-  type StaffRoleType,
-} from '@/domain/repositories/staff/dto/create-staff-repository.dto';
+import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsIn,
@@ -12,7 +9,10 @@ import {
   Matches,
 } from 'class-validator';
 
-export class CreateStaffUserDto {
+export const STAFF_ROLES = ['admin', 'manager'] as const;
+export type StaffRoleType = (typeof STAFF_ROLES)[number];
+
+export class CreateStaffDto {
   @IsString()
   @IsNotEmpty()
   @IsIn(STAFF_ROLES, {
@@ -30,14 +30,15 @@ export class CreateStaffUserDto {
 
   @IsString()
   @IsNotEmpty()
-  passwordHash: string;
+  password: string;
 
-  @IsEmail()
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
+  @IsEmail()
   email?: string;
 
-  @IsString()
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @TransformPhone()
   @Matches(/^\+55\d{10,11}$/i, {
     message:
