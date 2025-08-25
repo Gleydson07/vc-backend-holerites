@@ -3,12 +3,14 @@ import {
   DEFAULT_ROUNDS,
   UserRepository,
 } from '@/domain/repositories/user/user.repository';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { CreateStaffDto } from '../dto/create-staff.dto';
 import { TransactionManager } from '@/domain/managers/transaction/transaction-manager.manager';
 import * as bcrypt from 'bcrypt';
 import { UserEntity } from '@/domain/entities/user.entity';
 import { StaffEntity } from '@/domain/entities/staff.entity';
+import { isValidCPF } from '@/core/validators/cpf.validator';
+import { generateRandomPassword } from '@/core/security/password-generator.util';
 
 @Injectable()
 export class CreateStaffUserUseCase {
@@ -20,13 +22,19 @@ export class CreateStaffUserUseCase {
 
   async execute(tenantId: string, data: CreateStaffDto) {
     try {
-      const passwordHash = await bcrypt.hash(data.password, DEFAULT_ROUNDS);
+      if (!isValidCPF(data.cpf)) {
+        throw new BadRequestException('CPF inválido');
+      }
 
-      const result = await this.tm.run(
+      const pass = generateRandomPassword(8);
+      const passwordHash = await bcrypt.hash(pass, DEFAULT_ROUNDS);
+
+      return await this.tm.run(
         async (tx) => {
           const userEntity = new UserEntity({
             tenantId,
             passwordHash,
+            mustChangePassword: true,
             username: data.cpf,
             isActive: true,
           });
@@ -53,6 +61,9 @@ export class CreateStaffUserUseCase {
             throw new BadRequestException('Falha ao criar staff');
           }
 
+          // Será removido ao implementar envio de e-mail
+          console.log(`Senha gerada para o usuário ${data.fullName}: ${pass}`);
+
           return {
             id: staff.id,
             fullName: staff.fullName,
@@ -66,9 +77,11 @@ export class CreateStaffUserUseCase {
         },
         { timeout: 30000, maxWait: 15000 },
       );
-
-      return result;
     } catch (error: any) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new BadRequestException('Falha ao efetuar cadastro do usuário.');
     }
   }

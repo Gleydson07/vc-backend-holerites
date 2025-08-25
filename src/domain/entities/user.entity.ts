@@ -2,6 +2,7 @@ export interface UserProps {
   tenantId: string;
   username: string;
   passwordHash: string;
+  mustChangePassword?: boolean;
   isActive: boolean;
   createdAt?: Date;
   updatedAt?: Date | null;
@@ -49,6 +50,14 @@ export class UserEntity {
 
   public set passwordHash(value: string) {
     this._props.passwordHash = value;
+  }
+
+  public get mustChangePassword(): boolean | undefined {
+    return this._props.mustChangePassword;
+  }
+
+  public set mustChangePassword(value: boolean | undefined) {
+    this._props.mustChangePassword = value;
   }
 
   public get isActive(): boolean {

@@ -1,6 +1,7 @@
 import { TransformPhone } from '@/core/transformers/phone.transformer';
 import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsEmail,
   IsNotEmpty,
   IsOptional,
@@ -30,4 +31,8 @@ export class CreateEmployeeDto {
       'O phone deve estar no formato +55DDXXXXXXXXX (código do país + DDD + número, 10 ou 11 dígitos após +55)',
   })
   phone?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  createUser?: boolean;
 }

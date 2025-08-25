@@ -28,10 +28,6 @@ export class CreateStaffDto {
   @IsNotEmpty()
   cpf: string;
 
-  @IsString()
-  @IsNotEmpty()
-  password: string;
-
   @IsOptional()
   @Transform(({ value }) => (value === '' ? undefined : value))
   @IsEmail()
