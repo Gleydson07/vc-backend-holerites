@@ -22,8 +22,6 @@ import { TransactionModule } from './domain/managers/transaction/transaction.mod
     StaffModule,
     TenantsModule,
     RouterModule.register([
-      { path: 'auth', module: AuthModule },
-      { path: 'tenants', module: TenantsModule },
       { path: 'staff', module: StaffModule },
       { path: 'employees', module: EmployeesModule },
     ]),

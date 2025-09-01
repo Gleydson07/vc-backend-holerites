@@ -20,6 +20,7 @@ CREATE TABLE "public"."users" (
     "tenant_id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "password_hash" TEXT NOT NULL,
+    "must_change_password" BOOLEAN DEFAULT true,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -62,13 +63,25 @@ CREATE TABLE "public"."staff" (
 CREATE UNIQUE INDEX "tenants_cnpj_key" ON "public"."tenants"("cnpj");
 
 -- CreateIndex
+CREATE INDEX "idx_user_tenant_id_active" ON "public"."users"("tenant_id", "is_active");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "users_username_tenant_id_key" ON "public"."users"("username", "tenant_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_id_tenant_id_key" ON "public"."users"("id", "tenant_id");
+
+-- CreateIndex
+CREATE INDEX "idx_employee_tenant_id_user_id" ON "public"."employees"("tenant_id", "user_id");
+
+-- CreateIndex
+CREATE INDEX "idx_employee_tenant_id_full_name" ON "public"."employees"("tenant_id", "full_name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "employees_cpf_tenant_id_key" ON "public"."employees"("cpf", "tenant_id");
 
 -- CreateIndex
-CREATE INDEX "staff_tenant_id_role_idx" ON "public"."staff"("tenant_id", "role");
+CREATE INDEX "idx_staff_tenant_id_role" ON "public"."staff"("tenant_id", "role");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "staff_tenant_id_user_id_key" ON "public"."staff"("tenant_id", "user_id");

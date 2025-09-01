@@ -44,6 +44,8 @@ model User {
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@unique([username, tenantId], name: "uq_user_username_tenant")
+  @@unique([id, tenantId], name: "uq_user_username_id_tenant")
+  @@index([tenantId, isActive], name: "idx_user_tenant_id_active")
   @@map("users")
 }
 
@@ -62,6 +64,8 @@ model Employee {
   user   User?  @relation(fields: [userId], references: [id])
 
   @@unique([cpf, tenantId], name: "uq_employee_cpf_tenant")
+  @@index([tenantId, userId], name: "idx_employee_tenant_id_user_id")
+  @@index([tenantId, fullName], name: "idx_employee_tenant_id_full_name")
   @@map("employees")
 }
 
@@ -80,7 +84,7 @@ model Staff {
   tenant Tenant @relation(fields: [tenantId], references: [id])
   user   User   @relation(fields: [userId], references: [id])
 
-  @@unique([tenantId, userId])
-  @@index([tenantId, role])
+  @@unique([tenantId, userId], name: "uq_staff_tenant_id_user_id")
+  @@index([tenantId, role], name: "idx_staff_tenant_id_role")
   @@map("staff")
 }
