@@ -1,6 +1,9 @@
 -- CreateEnum
 CREATE TYPE "public"."StaffRole" AS ENUM ('admin', 'manager');
 
+-- CreateEnum
+CREATE TYPE "public"."TagScope" AS ENUM ('staff', 'employee', 'payslip');
+
 -- CreateTable
 CREATE TABLE "public"."tenants" (
     "id" TEXT NOT NULL,
@@ -33,6 +36,7 @@ CREATE TABLE "public"."employees" (
     "id" TEXT NOT NULL,
     "tenant_id" TEXT NOT NULL,
     "user_id" TEXT,
+    "tag_id" TEXT,
     "cpf" TEXT NOT NULL,
     "full_name" TEXT NOT NULL,
     "email" TEXT,
@@ -47,6 +51,7 @@ CREATE TABLE "public"."employees" (
 CREATE TABLE "public"."staff" (
     "id" TEXT NOT NULL,
     "tenant_id" TEXT NOT NULL,
+    "tag_id" TEXT,
     "user_id" TEXT NOT NULL,
     "cpf" TEXT NOT NULL,
     "role" "public"."StaffRole" NOT NULL,
@@ -57,6 +62,29 @@ CREATE TABLE "public"."staff" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "staff_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."tags" (
+    "id" TEXT NOT NULL,
+    "tenant_id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "bg_color" TEXT NOT NULL,
+    "scope" "public"."TagScope" NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "tags_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."tag_relations" (
+    "id" TEXT NOT NULL,
+    "tag_id" TEXT NOT NULL,
+    "staff_id" TEXT,
+    "employee_id" TEXT,
+
+    CONSTRAINT "tag_relations_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -86,6 +114,9 @@ CREATE INDEX "idx_staff_tenant_id_role" ON "public"."staff"("tenant_id", "role")
 -- CreateIndex
 CREATE UNIQUE INDEX "staff_tenant_id_user_id_key" ON "public"."staff"("tenant_id", "user_id");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "tag_relations_tag_id_staff_id_employee_id_key" ON "public"."tag_relations"("tag_id", "staff_id", "employee_id");
+
 -- AddForeignKey
 ALTER TABLE "public"."users" ADD CONSTRAINT "users_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "public"."tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -96,7 +127,25 @@ ALTER TABLE "public"."employees" ADD CONSTRAINT "employees_tenant_id_fkey" FOREI
 ALTER TABLE "public"."employees" ADD CONSTRAINT "employees_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "public"."employees" ADD CONSTRAINT "employees_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "public"."tags"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "public"."staff" ADD CONSTRAINT "staff_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "public"."tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."staff" ADD CONSTRAINT "staff_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."staff" ADD CONSTRAINT "staff_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "public"."tags"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."tags" ADD CONSTRAINT "tags_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "public"."tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."tag_relations" ADD CONSTRAINT "tag_relations_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "public"."tags"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."tag_relations" ADD CONSTRAINT "tag_relations_staff_id_fkey" FOREIGN KEY ("staff_id") REFERENCES "public"."staff"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."tag_relations" ADD CONSTRAINT "tag_relations_employee_id_fkey" FOREIGN KEY ("employee_id") REFERENCES "public"."employees"("id") ON DELETE SET NULL ON UPDATE CASCADE;

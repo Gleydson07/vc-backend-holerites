@@ -8,6 +8,7 @@ import { DatabaseModule } from './infra/database/database.module';
 import { EmployeesModule } from './domain/modules/employees/employees.module';
 import { StaffModule } from './domain/modules/staff/staff.module';
 import { TransactionModule } from './domain/managers/transaction/transaction.module';
+import { TagsModule } from './domain/modules/tags/tags.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { TransactionModule } from './domain/managers/transaction/transaction.mod
       { path: 'staff', module: StaffModule },
       { path: 'employees', module: EmployeesModule },
     ]),
+    TagsModule,
   ],
   controllers: [],
   providers: [],
