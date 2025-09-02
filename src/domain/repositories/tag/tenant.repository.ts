@@ -8,4 +8,6 @@ export abstract class TagRepository {
   abstract createMany(data: CreateTagRepositoryDto[]): Promise<void>;
 
   abstract findAll(data: findAllTagsRepositoryDto): Promise<TagEntity[]>;
+
+  abstract delete(tagId: string): Promise<void>;
 }

@@ -1,6 +1,5 @@
 import { TagRepository } from '@/domain/repositories/tag/tenant.repository';
 import { BadRequestException, Logger, Injectable } from '@nestjs/common';
-import { TagEntity } from '@/domain/entities/tag.entity';
 import { FindAllTagsDto } from '../dto/find-all-tags.dto';
 import { shortingTenantId } from '@/core/utils/short-tenant-id.util';
 
@@ -9,10 +8,7 @@ export class FindAllTagsUsecase {
   private readonly logger = new Logger(FindAllTagsUsecase.name);
   constructor(private readonly tagRepository: TagRepository) {}
 
-  async execute(
-    tenantId: string,
-    filters: FindAllTagsDto,
-  ): Promise<TagEntity[]> {
+  async execute(tenantId: string, filters: FindAllTagsDto) {
     const shortedTID = shortingTenantId(tenantId);
 
     try {
@@ -29,7 +25,14 @@ export class FindAllTagsUsecase {
       const tags = await this.tagRepository.findAll({ ...filters, tenantId });
 
       this.logger.log(`Finding all tags for tenant ${shortedTID} finished.`);
-      return tags;
+      return tags.map((tag) => ({
+        id: tag.id,
+        title: tag.title,
+        textColor: tag.textColor,
+        bgColor: tag.bgColor,
+        scope: tag.scope,
+        createdAt: tag.createdAt,
+      }));
     } catch (error) {
       this.logger.error(
         `Failed to find tags for tenant ${shortedTID}`,

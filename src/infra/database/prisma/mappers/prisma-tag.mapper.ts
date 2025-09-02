@@ -3,7 +3,7 @@ import { TagScopeEnum } from '@/domain/repositories/tag/dto/create-tag-repositor
 import { Tag as PrismaTag, TagScope } from '@prisma/client';
 
 export class PrismaTagMapper {
-  private static fromTagScopeEnum(scope: TagScopeEnum): TagScope {
+  static fromTagScopeEnum(scope: TagScopeEnum): TagScope {
     switch (scope) {
       case TagScopeEnum.EMPLOYEE:
         return TagScope.EMPLOYEE;

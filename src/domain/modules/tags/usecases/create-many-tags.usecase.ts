@@ -9,7 +9,7 @@ export class CreateManyTagsUsecase {
   private readonly logger = new Logger(CreateManyTagsUsecase.name);
   constructor(private readonly tagRepository: TagRepository) {}
 
-  async execute(tenantId: string, tags: CreateTagDto[]): Promise<void> {
+  async execute(tenantId: string, tags: CreateTagDto[]) {
     try {
       this.logger.log(`Starting create many tags for tenant ${tenantId}`);
 

@@ -23,7 +23,9 @@ export class PrismaTagRepository implements TagRepository {
     };
 
     if (data.scope) {
-      Object.assign(filters, { scope: data.scope });
+      Object.assign(filters, {
+        scope: PrismaTagMapper.fromTagScopeEnum(data.scope),
+      });
     }
 
     if (data.title) {
@@ -44,5 +46,11 @@ export class PrismaTagRepository implements TagRepository {
     }
 
     return tags.map((tag) => PrismaTagMapper.toDomain(tag));
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prismaService.tag.delete({
+      where: { id },
+    });
   }
 }
