@@ -22,11 +22,12 @@ import { TagsModule } from './domain/modules/tags/tags.module';
     EmployeesModule,
     StaffModule,
     TenantsModule,
+    TagsModule,
     RouterModule.register([
+      { path: 'settings', children: [{ path: 'tags', module: TagsModule }] },
       { path: 'staff', module: StaffModule },
       { path: 'employees', module: EmployeesModule },
     ]),
-    TagsModule,
   ],
   controllers: [],
   providers: [],

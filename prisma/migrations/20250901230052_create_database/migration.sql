@@ -36,7 +36,6 @@ CREATE TABLE "public"."employees" (
     "id" TEXT NOT NULL,
     "tenant_id" TEXT NOT NULL,
     "user_id" TEXT,
-    "tag_id" TEXT,
     "cpf" TEXT NOT NULL,
     "full_name" TEXT NOT NULL,
     "email" TEXT,
@@ -51,7 +50,6 @@ CREATE TABLE "public"."employees" (
 CREATE TABLE "public"."staff" (
     "id" TEXT NOT NULL,
     "tenant_id" TEXT NOT NULL,
-    "tag_id" TEXT,
     "user_id" TEXT NOT NULL,
     "cpf" TEXT NOT NULL,
     "role" "public"."StaffRole" NOT NULL,
@@ -127,22 +125,16 @@ ALTER TABLE "public"."employees" ADD CONSTRAINT "employees_tenant_id_fkey" FOREI
 ALTER TABLE "public"."employees" ADD CONSTRAINT "employees_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."employees" ADD CONSTRAINT "employees_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "public"."tags"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "public"."staff" ADD CONSTRAINT "staff_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "public"."tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."staff" ADD CONSTRAINT "staff_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."staff" ADD CONSTRAINT "staff_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "public"."tags"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "public"."tags" ADD CONSTRAINT "tags_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "public"."tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."tag_relations" ADD CONSTRAINT "tag_relations_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "public"."tags"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."tag_relations" ADD CONSTRAINT "tag_relations_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "public"."tags"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."tag_relations" ADD CONSTRAINT "tag_relations_staff_id_fkey" FOREIGN KEY ("staff_id") REFERENCES "public"."staff"("id") ON DELETE SET NULL ON UPDATE CASCADE;

@@ -60,7 +60,6 @@ model Employee {
   id        String   @id @default(uuid())
   tenantId  String   @map("tenant_id")
   userId    String?  @map("user_id")
-  tagId     String?  @map("tag_id")
   cpf       String   @map("cpf")
   fullName  String   @map("full_name")
   email     String?  @map("email")
@@ -68,10 +67,10 @@ model Employee {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  tenant       Tenant         @relation(fields: [tenantId], references: [id])
-  user         User?          @relation(fields: [userId], references: [id])
-  tag          Tag?           @relation(fields: [tagId], references: [id])
-  TagRelations TagRelations[]
+  tagRelations TagRelations[]
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
 
   @@unique([cpf, tenantId], name: "uq_employee_cpf_tenant")
   @@index([tenantId, userId], name: "idx_employee_tenant_id_user_id")
@@ -82,7 +81,6 @@ model Employee {
 model Staff {
   id        String    @id @default(uuid())
   tenantId  String    @map("tenant_id")
-  tagId     String?   @map("tag_id")
   userId    String    @map("user_id")
   cpf       String    @map("cpf")
   role      StaffRole @map("role")
@@ -92,10 +90,10 @@ model Staff {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
 
-  tenant       Tenant         @relation(fields: [tenantId], references: [id])
-  user         User           @relation(fields: [userId], references: [id])
-  tag          Tag?           @relation(fields: [tagId], references: [id])
-  TagRelations TagRelations[]
+  tagRelations TagRelations[]
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 
   @@unique([tenantId, userId], name: "uq_staff_tenant_id_user_id")
   @@index([tenantId, role], name: "idx_staff_tenant_id_role")
@@ -106,17 +104,17 @@ model Tag {
   id        String   @id @default(uuid())
   tenantId  String   @map("tenant_id")
   title     String   @map("title")
+  textColor String   @map("text_color")
   bgColor   String   @map("bg_color")
   scope     TagScope @map("scope")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  staff     Staff[]
-  employees Employee[]
+  tagRelations TagRelations[]
 
-  tenant       Tenant         @relation(fields: [tenantId], references: [id])
-  TagRelations TagRelations[]
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
+  @@unique([tenantId, title, scope], name: "uq_tag_tenant_id_title")
   @@map("tags")
 }
 
@@ -126,7 +124,7 @@ model TagRelations {
   staffId    String? @map("staff_id")
   employeeId String? @map("employee_id")
 
-  tag      Tag       @relation(fields: [tagId], references: [id])
+  tag      Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
   staff    Staff?    @relation(fields: [staffId], references: [id])
   employee Employee? @relation(fields: [employeeId], references: [id])
 
